@@ -56,10 +56,12 @@ assert "ref: ${{ github.sha }}" in release
 download = release.split("uses: actions/download-artifact@v4", 1)[1].split("- name:", 1)[0]
 assert "name: Madeira-ipa" in download and "path: dist" in download
 assert not any(option in download for option in ("run-id:", "repository:", "github-token:"))
-assert release.index("runtime-components.py ipa") < release.index("gh release create")
-assert release.index('test "$asset"') < release.index("gh release edit")
-assert '--target "$GITHUB_SHA"' in release
-assert "${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}" in release
-assert "--draft --prerelease --latest=false" in release
-assert "--draft=false --prerelease --latest=false" in release
+assert release.index("runtime-components.py ipa") < release.index("publish-release.sh")
+publisher = (repo / "tools/build/publish-release.sh").read_text(encoding="utf-8")
+assert publisher.index('test "$asset"') < publisher.index("gh release edit")
+assert '--target "$GITHUB_SHA"' in publisher
+assert "${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}" in publisher
+assert "--draft --prerelease --latest=false" in publisher
+assert "--draft=false --prerelease --latest=false" in publisher
+assert "cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}" in workflow
 print(f"CI release checks passed ({count} publication conditions).")

@@ -54,7 +54,8 @@ An existing archive alone does not skip these local source builds.
 
 GitHub Actions runs once for each PR update, on every push to main, and on manual
 requests. Documentation changes also start a run. A newer run cancels an older
-run for the same PR or branch. Build copies under `codex/pr-build-*` also run on
+run for the same PR or development branch. Main runs finish before the next
+queued main run starts, so publication is not interrupted. Build copies under `codex/pr-build-*` also run on
 push, so a PR head with merge conflicts can still produce an IPA.
 
 CI can reuse a completed IPA when the checked-out Git tree, runner platform,
@@ -62,6 +63,38 @@ Xcode/SDK/compiler identity, runner image and build flags match. The Git tree
 includes component pins and build scripts. A reused IPA must pass the ZIP and
 bundle-layout checks before upload. GitHub's branch and PR cache access rules
 still apply; an unrelated branch's cache is not a shared artifact store.
+
+## Main build distribution
+
+Successful `main` builds in `kinghuijae/Madeira` publish an individual
+`ci-<run>-<attempt>-<sha>` prerelease, then update the `main-latest` prerelease:
+
+- [SideStore source](https://github.com/kinghuijae/Madeira/releases/download/main-latest/source.json)
+- [Latest main IPA](https://github.com/kinghuijae/Madeira/releases/download/main-latest/Madeira.ipa)
+
+Add the source URL in SideStore, install Madeira from the source, then use its
+update button when a new build appears. The first successful build containing
+this configuration creates these URLs. No extra secrets or GitHub Pages setup
+are needed; the release job uses its existing `contents: write` permission.
+
+CI stamps the app and its extensions with version `0.<run>.<attempt>` before
+ad-hoc signing. Local builds retain the Xcode project versions. A complete IPA
+cache hit retains its embedded version, since its content has not changed.
+The source generator reads the actual IPA's bundle identifier, version, size,
+minimum OS version, signed entitlements and privacy descriptions. It omits
+marketplace-only fields for SideStore compatibility.
+
+Each source entry downloads its matching individual release, so an already
+cached source remains usable during replacement of the fixed IPA URL. Uploads
+are checked against GitHub's size and SHA-256 before advancing the channel;
+`source.json` is uploaded after the IPA mirror. Individual releases are retained.
+Failed builds and PRs do not publish. Re-running a commit older than the current
+channel publishes only its individual release, without rolling back the channel.
+As with other GitHub release asset replacements, the fixed URLs can briefly be
+unavailable during replacement. A manually cancelled or failed upload can be
+recovered by rerunning the workflow's failed release job.
+
+## Component caching
 
 On an IPA cache miss, the workflow builds the native stages in parallel. Their
 cache keys include the relevant source pins, recipes and build environment.

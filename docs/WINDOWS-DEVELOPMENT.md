@@ -99,12 +99,28 @@ fixture, Apple `plutil`/`xcrun`, Swift가 필요한 검사도 있어 Windows 검
 PR, 다른 브랜치·저장소, 실패·취소된 빌드에서는 게시하지 않는다.
 
 - 태그: `ci-<실행 번호>-<재시도 번호>-<커밋 앞 7자리>`.
-- 첨부 파일: `Madeira.ipa`, `SHA256SUMS`.
+- 첨부 파일: `Madeira.ipa`, `source.json`, `SHA256SUMS`.
 - 릴리스 노트: 소스 커밋, CI 실행 링크, IPA SHA-256.
 - 다운로드한 해당 실행의 artifact를 소스 트리·런타임 입력·바이너리 구조까지 검증한다.
   초안 릴리스에 업로드한 후 서버의 IPA 크기와 SHA-256을 대조하고 공개한다.
-- 기존 릴리스를 덮어쓰지 않고, 정식 Latest 릴리스로 지정하지 않는다.
+- 개별 CI 릴리스는 유지하고, 정식 Latest 릴리스로 지정하지 않는다.
   업로드가 실패하면 초안만 남을 수 있으며 **Re-run jobs**는 새 재시도 태그를 사용한다.
+
+검증된 개별 릴리스를 공개한 후 `main-latest` 사전 릴리스도 갱신한다.
+SideStore의 **Sources**에 아래 주소를 한 번 등록하고 해당 소스의 Madeira를
+설치하면, 이후 새 `main` 빌드를 업데이트로 받을 수 있다.
+
+```text
+https://github.com/kinghuijae/Madeira/releases/download/main-latest/source.json
+```
+
+IPA 직접 다운로드 주소도 고정된다:
+[Madeira.ipa](https://github.com/kinghuijae/Madeira/releases/download/main-latest/Madeira.ipa).
+CI 버전은 `0.<실행 번호>.<재시도 번호>`이며, 완성된 IPA를 캐시에서 재사용할 때는
+파일 내부 버전을 유지한다. 소스의 다운로드 주소는 해당 개별 릴리스를 가리켜
+고정 IPA 교체 중에도 버전이 뒤섞이지 않는다. `main` 실행은 자동 취소하지 않고
+순서대로 게시하며, 과거 커밋 재실행으로 최신 채널을 되돌리지 않는다.
+자세한 내용은 [배포 설정](../BUILDING.md#main-build-distribution)을 참고한다.
 
 `Madeira-ipa` Actions artifact도 계속 생성된다. 공개된 Release의 IPA는 Actions
 artifact 보존 기간과 별개로 유지된다. 게시 여부와 링크는 `release` 작업의 요약에서 확인한다.

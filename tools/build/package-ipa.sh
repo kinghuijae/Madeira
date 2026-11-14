@@ -43,6 +43,11 @@ xcodebuild \
 
 [[ -d "$APP" ]] || { echo "ERROR: xcodebuild succeeded but Madeira.app is missing" >&2; exit 1; }
 
+if [[ "${GITHUB_ACTIONS:-}" == true ]]; then
+  python3 "$ROOT/tools/build/sidestore-source.py" stamp "$APP" \
+    --run-number "$GITHUB_RUN_NUMBER" --run-attempt "$GITHUB_RUN_ATTEMPT"
+fi
+
 python3 "$ROOT/tools/build/runtime-components.py" bundle "$APP"
 
 # Preserve Madeira's requested JIT/debug entitlements in the IPA. SideStore will

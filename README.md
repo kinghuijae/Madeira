@@ -66,6 +66,19 @@ Because JIT needs a debugger, Madeira cannot be offered on the App Store.
 
 ## Installing
 
+For this personal fork's latest successful `main` build, add this source URL
+in SideStore's **Sources** screen:
+
+```text
+https://github.com/kinghuijae/Madeira/releases/download/main-latest/source.json
+```
+
+Install **Madeira** from that source; subsequent builds appear as updates in
+SideStore. The [direct IPA download](https://github.com/kinghuijae/Madeira/releases/download/main-latest/Madeira.ipa)
+also keeps the same URL. These are CI prereleases; signing and JIT setup are
+still required. See [main build distribution](BUILDING.md#main-build-distribution)
+for versioning and publication details.
+
 1. Download the IPA from the [latest release](https://github.com/willfaust/Madeira/releases).
 2. Sideload it with your own Apple ID using SideStore, AltStore, Sideloadly,
    Plume or a similar tool.

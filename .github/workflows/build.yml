@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ipa-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Do not interrupt a main release while replacing its public assets.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # A complete IPA cache is scoped by the checked-out tree and build environment.
 # Native libraries and runtime components have separate source/SDK caches.
@@ -32,6 +33,8 @@ jobs:
           python3 tests/host/check-build-inputs.py
           python3 tests/host/check-ci-component-keys.py
           python3 tests/host/check-ci-release.py
+          python3 tests/host/check-sidestore-source.py
+          python3 tests/host/check-release-publisher.py
           python3 tests/host/check-ffmpeg-source-reuse.py
           python3 tests/host/check-ci-llvm-cache.py
           python3 tests/host/check-clean-bootstrap.py
@@ -111,40 +114,11 @@ jobs:
         env:
           MADEIRA_RUNTIME_SDK: ${{ needs.plan.outputs.sdk }}
         run: python3 tools/build/runtime-components.py ipa dist/Madeira.ipa
-      - name: Publish personal prerelease
+      - name: Publish prerelease and SideStore main channel
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: |
-          set -euo pipefail
-          tag="ci-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}"
-          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}"
-          (cd dist && sha256sum Madeira.ipa > SHA256SUMS)
-          checksum=$(cut -d ' ' -f 1 dist/SHA256SUMS)
-          size=$(stat -c %s dist/Madeira.ipa)
-          notes="$RUNNER_TEMP/release-notes.md"
-          cat > "$notes" <<EOF
-          Personal CI build of Madeira.
-
-          - Source commit: ${GITHUB_SHA}
-          - Build: ${run_url}
-          - IPA SHA-256: \`${checksum}\`
-
-          Download Madeira.ipa below. This ad-hoc signed IPA needs re-signing
-          with your own Apple ID and JIT setup for use on an iPhone.
-          Game compatibility has not been verified on a device.
-          EOF
-          gh release create "$tag" dist/Madeira.ipa dist/SHA256SUMS \
-            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "Madeira CI ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT} (${GITHUB_SHA:0:7})" \
-            --notes-file "$notes" --draft --prerelease --latest=false
-          release_api=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json apiUrl --jq .apiUrl)
-          asset=$(gh api "$release_api" \
-            --jq '.assets[] | select(.name == "Madeira.ipa") | [.state, (.size | tostring), .digest] | join(" ")')
-          test "$asset" = "uploaded $size sha256:$checksum"
-          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
-          url=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq .url)
-          printf '### IPA release\n\n[%s](%s)\n\nSHA-256: `%s`\n' "$tag" "$url" "$checksum" >> "$GITHUB_STEP_SUMMARY"
+        run: bash tools/build/publish-release.sh
 
   llvm:
     needs: plan
