@@ -2,6 +2,10 @@
 
 Madeira is intended to be buildable from a clean clone with one command.
 
+For this personal fork's Windows editing and checks, see
+[`docs/WINDOWS-DEVELOPMENT.md`](docs/WINDOWS-DEVELOPMENT.md). Building the IPA
+still requires macOS and Xcode, locally or in the existing GitHub Actions workflow.
+
 ## Prerequisites
 
 - macOS with a current Xcode installation and the iOS SDK

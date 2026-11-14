@@ -226,3 +226,7 @@ __pycache__/
 
 # Verified runtime component caches
 .runtime-cache/
+
+# Windows development environment and local verification logs
+.venv/
+.local/

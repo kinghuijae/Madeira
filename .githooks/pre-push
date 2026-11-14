@@ -1,4 +1,14 @@
 #!/bin/sh
+# Personal fork: reject the upstream remote and direct URLs to its owner's repos.
+# Check the destination too, so renaming a remote cannot bypass this guard.
+destination=$(printf '%s %s' "$1" "$2" | tr '[:upper:]' '[:lower:]')
+case "$destination" in
+    upstream\ *|*github.com[:/]willfaust/*|*github.com:[0-9]*/willfaust/*)
+        echo "pre-push: upstream pushes are disabled; push to kinghuijae/Madeira (origin)." >&2
+        exit 1
+        ;;
+esac
+
 # Refuse to push to a non-local remote while the converter exception is still a
 # draft. Distribution starts with the push, not with a tag. Enable with:
 #   git config core.hooksPath .githooks
