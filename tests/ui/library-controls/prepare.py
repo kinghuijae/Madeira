@@ -1,5 +1,6 @@
 """Exercise the real toolbar views without linking the device-only Wine runtime."""
 import json
+import plistlib
 from pathlib import Path
 import sys
 
@@ -25,3 +26,6 @@ controls += declaration('private struct LibraryTabNavigation:', 'struct SteamMat
 # isolates the title's hit-testing flag; it does not change the shipped app.
 controls = controls.replace('.allowsHitTesting(false)', '.allowsHitTesting(ProcessInfo.processInfo.arguments.contains("--interactive-title"))')
 (here / 'ProductionControls.swift').write_text('import SwiftUI\nimport UIKit\n' + controls, encoding='utf-8')
+info = plistlib.loads((root / 'app/Madeira/Info.plist').read_bytes())
+with (here / 'SceneInfo.plist').open('wb') as output:
+    plistlib.dump({'UIApplicationSceneManifest': info['UIApplicationSceneManifest']}, output)
