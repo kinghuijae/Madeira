@@ -1,0 +1,41 @@
+name: Library controls UI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['codex/duo-controls-*']
+
+permissions:
+  contents: read
+
+jobs:
+  controls:
+    runs-on: xcode-27
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect simulator environment
+        run: |
+          xcodebuild -version
+          xcrun simctl list -j > /tmp/madeira-simulators.json
+          cat /tmp/madeira-simulators.json
+      - name: Prepare UI test project
+        run: |
+          command -v xcodegen || brew install xcodegen
+          python3 tests/ui/library-controls/prepare.py
+          xcodegen generate --spec tests/ui/library-controls/project.yml
+      - name: Test Duo toolbar and tab actions
+        run: |
+          device=$(python3 tests/ui/library-controls/prepare.py --device /tmp/madeira-simulators.json)
+          xcodebuild test -project tests/ui/library-controls/LibraryControls.xcodeproj \
+            -scheme LibraryControls -destination "platform=iOS Simulator,id=$device" \
+            -parallel-testing-enabled NO -resultBundlePath /tmp/LibraryControls.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: library-controls-results
+          path: |
+            /tmp/LibraryControls.xcresult
+            /tmp/madeira-simulators.json
+          if-no-files-found: error
