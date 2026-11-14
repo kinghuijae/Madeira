@@ -3293,6 +3293,7 @@ struct LibraryView: View {
         TabView(selection: Binding(get: { tab }, set: { switchTab(to: $0) })) {
             NavigationStack {
                 Group { if LibraryGridArm.zoomable(setting: zoomableGrid, layout: layout) { zoomableLibrary } else { library } }
+                    .modifier(ClaimGamepadEvents())
                     .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
                     .modifier(LibraryTabNavigation(search: $search, prompt: L("Search your library")))
                     .toolbar {
@@ -3304,6 +3305,7 @@ struct LibraryView: View {
             .tag(0)
             NavigationStack {
                 settingsTab
+                    .modifier(ClaimGamepadEvents())
                     .modifier(LibraryTabNavigation(search: $settingsSearch, prompt: L("Search settings")))
                     .toolbar {
                         LibraryLargeTitle()
