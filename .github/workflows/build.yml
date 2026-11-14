@@ -31,6 +31,7 @@ jobs:
         run: |
           python3 tests/host/check-build-inputs.py
           python3 tests/host/check-ci-component-keys.py
+          python3 tests/host/check-ci-release.py
           python3 tests/host/check-ffmpeg-source-reuse.py
           python3 tests/host/check-ci-llvm-cache.py
           python3 tests/host/check-clean-bootstrap.py
@@ -80,6 +81,70 @@ jobs:
           if-no-files-found: error
           overwrite: true
           compression-level: 0
+
+  release:
+    needs: [plan, app, reuse]
+    # A successful producer always has a skipped sibling. Override the default
+    # success() gate, while rejecting failed/cancelled builds and PR artifacts.
+    if: >-
+      ${{ !cancelled() &&
+          github.repository == 'kinghuijae/Madeira' &&
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+          needs.plan.result == 'success' &&
+          ((needs.app.result == 'success' && needs.reuse.result == 'skipped') ||
+           (needs.reuse.result == 'success' && needs.app.result == 'skipped')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: Madeira-ipa
+          path: dist
+      - name: Validate release IPA
+        env:
+          MADEIRA_RUNTIME_SDK: ${{ needs.plan.outputs.sdk }}
+        run: python3 tools/build/runtime-components.py ipa dist/Madeira.ipa
+      - name: Publish personal prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="ci-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}"
+          (cd dist && sha256sum Madeira.ipa > SHA256SUMS)
+          checksum=$(cut -d ' ' -f 1 dist/SHA256SUMS)
+          size=$(stat -c %s dist/Madeira.ipa)
+          notes="$RUNNER_TEMP/release-notes.md"
+          cat > "$notes" <<EOF
+          Personal CI build of Madeira.
+
+          - Source commit: ${GITHUB_SHA}
+          - Build: ${run_url}
+          - IPA SHA-256: \`${checksum}\`
+
+          Download Madeira.ipa below. This ad-hoc signed IPA needs re-signing
+          with your own Apple ID and JIT setup for use on an iPhone.
+          Game compatibility has not been verified on a device.
+          EOF
+          gh release create "$tag" dist/Madeira.ipa dist/SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Madeira CI ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT} (${GITHUB_SHA:0:7})" \
+            --notes-file "$notes" --draft --prerelease --latest=false
+          release_api=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json apiUrl --jq .apiUrl)
+          asset=$(gh api "$release_api" \
+            --jq '.assets[] | select(.name == "Madeira.ipa") | [.state, (.size | tostring), .digest] | join(" ")')
+          test "$asset" = "uploaded $size sha256:$checksum"
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
+          url=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq .url)
+          printf '### IPA release\n\n[%s](%s)\n\nSHA-256: `%s`\n' "$tag" "$url" "$checksum" >> "$GITHUB_STEP_SUMMARY"
 
   llvm:
     needs: plan

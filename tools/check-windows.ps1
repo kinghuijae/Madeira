@@ -18,7 +18,7 @@ try {
     $pins = git submodule status --recursive
     if ($LASTEXITCODE -ne 0 -or $pins -match '^[-+U]') { throw 'Submodules are missing or differ from the pinned commits.' }
     foreach ($check in @(
-        'check-ci-component-keys', 'check-game-deps', 'check-wine-media-dlls',
+        'check-ci-component-keys', 'check-ci-release', 'check-game-deps', 'check-wine-media-dlls',
         'check-font-keys-repair', 'check-nls-extra-switch', 'check-config-catalog',
         'check-translations', 'check-doc-links'
     )) {

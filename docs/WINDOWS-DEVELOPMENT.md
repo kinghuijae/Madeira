@@ -56,6 +56,7 @@ GitHub 웹에서 하는 변경까지 막지는 않는다. 새 clone에서는 설
 | 검사 | 범위 |
 | --- | --- |
 | CI component keys | 4,119개 소스 변경 조합의 캐시 무효화 규칙 |
+| CI release | 포크·브랜치·이벤트·작업 결과별 자동 게시 허용 조건 |
 | Game dependencies | PE32/PE32+ 일반·지연 DLL import 파싱 |
 | Wine media DLLs | 미디어 DLL 패키징 검사와 잘못된 PE 입력 |
 | Font keys / NLS | 폰트 등록 복구 및 추가 코드페이지 경로 |
@@ -77,31 +78,50 @@ fixture, Apple `plutil`/`xcrun`, Swift가 필요한 검사도 있어 Windows 검
 ## 기존 CI 사용
 
 워크플로는 [Build IPA](https://github.com/kinghuijae/Madeira/actions/workflows/build.yml)다.
-`.github/workflows/build.yml`은 변경하지 않았다.
+기존 빌드와 캐시 흐름을 유지하고, 성공한 IPA를 게시하는 `release` 작업을 추가했다.
 
 - `main`, `codex/pr-build-*`에 push하거나 포크 내부 PR을 갱신하면 실행된다.
 - 다른 이름의 개발 브랜치는 Actions의 **Run workflow**에서 선택해 실행한다.
 - 원본 저장소에 PR을 만들 필요가 없다. PR을 쓸 경우 base 저장소도 개인 포크로 선택한다.
 - 현재 `xcode-27`은 [GitHub 공식 macOS ARM64 러너](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)다.
-- 워크플로 권한은 `contents: read`이고 별도 `secrets.*` 참조가 없다.
-  빌드에는 개인 Apple 인증서 secret이 필요하지 않다.
+- 기본 워크플로 권한은 `contents: read`이고 `release` 작업에만 `contents: write`를 준다.
+  자동 제공되는 `GITHUB_TOKEN`으로 게시하므로 개인 PAT나 Apple 인증서 secret을
+  추가할 필요가 없다.
 - IPA는 ad-hoc 서명 후 `Madeira-ipa` artifact로 업로드된다. iPhone 설치 시에는
   본인 Apple ID를 사용하는 사이드로딩 도구의 재서명과 JIT 설정이 별도로 필요하다.
 - 첫 실행은 포크 자체의 캐시가 없어 오래 걸린다. 이후 성공한 구성 요소의 캐시를 재사용한다.
+
+### IPA 자동 릴리스
+
+`kinghuijae/Madeira`의 `main`에 push하거나 `main`에서 **Run workflow**를 실행하면,
+`app` 빌드 또는 완성된 IPA를 복원하는 `reuse`가 성공한 뒤
+[Releases](https://github.com/kinghuijae/Madeira/releases)에 **Pre-release**가 생성된다.
+PR, 다른 브랜치·저장소, 실패·취소된 빌드에서는 게시하지 않는다.
+
+- 태그: `ci-<실행 번호>-<재시도 번호>-<커밋 앞 7자리>`.
+- 첨부 파일: `Madeira.ipa`, `SHA256SUMS`.
+- 릴리스 노트: 소스 커밋, CI 실행 링크, IPA SHA-256.
+- 다운로드한 해당 실행의 artifact를 소스 트리·런타임 입력·바이너리 구조까지 검증한다.
+  초안 릴리스에 업로드한 후 서버의 IPA 크기와 SHA-256을 대조하고 공개한다.
+- 기존 릴리스를 덮어쓰지 않고, 정식 Latest 릴리스로 지정하지 않는다.
+  업로드가 실패하면 초안만 남을 수 있으며 **Re-run jobs**는 새 재시도 태그를 사용한다.
+
+`Madeira-ipa` Actions artifact도 계속 생성된다. 공개된 Release의 IPA는 Actions
+artifact 보존 기간과 별개로 유지된다. 게시 여부와 링크는 `release` 작업의 요약에서 확인한다.
+
+### 최초 빌드 검증 기록
 
 포크의 Actions를 활성화하고 원격 `main` 그대로
 [첫 수동 실행](https://github.com/kinghuijae/Madeira/actions/runs/43581757655)을 시작했다.
 이 실행은 Windows 환경 설정 변경이 포함되기 전의 위 기준 커밋을 검증한 것이다.
 최종 실행 결과는 이 문서의 아래 검증 기록에 정리한다.
 
-### 검증 기록
-
 - 로컬 검사: Python 검사 8개, prefix template 검사, 푸시 목적지 10개,
   shell 문법 20개 모두 통과. 카탈로그의 Swift 타입 검사는 macOS에서 별도 수행한다.
 - 개인 포크 `origin`으로 `git push --dry-run origin HEAD:main` 성공.
   원격 브랜치에는 변경을 쓰지 않았다.
 - 설정 스크립트 재실행 성공. 24개 서브모듈의 push URL 차단 확인.
-- `.github/workflows/build.yml`은 원격 `main`과 동일함을 확인.
+- 최초 검증 당시 `.github/workflows/build.yml`은 원격 `main`과 동일함을 확인.
 - 첫 CI: 2026-11-14에 약 1시간 6분 만에 **전체 성공**.
   `plan`, LLVM, FEX, i386, 런타임 7개, `app` 등 12개 작업이 성공했다.
   첫 실행에 완성된 IPA 캐시가 없으므로 `reuse` 작업 1개만 예상대로 건너뛰었다.
