@@ -2,8 +2,14 @@
 set -euo pipefail
 
 # Defense in depth: only this fork's successful main workflow calls this script.
-[[ "$GITHUB_REPOSITORY" == kinghuijae/Madeira && "$GITHUB_REF" == refs/heads/main ]]
-[[ "$GITHUB_EVENT_NAME" == push || "$GITHUB_EVENT_NAME" == workflow_dispatch ]]
+if [[ "$GITHUB_REPOSITORY" != kinghuijae/Madeira || "$GITHUB_REF" != refs/heads/main ]]; then
+  echo 'Only kinghuijae/Madeira main can publish this channel.' >&2
+  exit 1
+fi
+if [[ "$GITHUB_EVENT_NAME" != push && "$GITHUB_EVENT_NAME" != workflow_dispatch ]]; then
+  echo 'Only push and workflow_dispatch builds can publish this channel.' >&2
+  exit 1
+fi
 
 tag="ci-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}"
 base="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
