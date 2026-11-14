@@ -5,6 +5,7 @@ final class ControlsTests: XCTestCase {
     func testInteractiveTitle() { check(["--interactive-title"]) }
     func testWithoutCustomTitle() { check(["--plain-title"]) }
     func testWithoutRootModifiers() { check(["--no-root-modifiers"]) }
+    func testHorizontalBars() { check(["--horizontal-bars"]) }
 
     private func check(_ arguments: [String]) {
         continueAfterFailure = true
@@ -42,6 +43,10 @@ final class ControlsTests: XCTestCase {
             print(app.debugDescription)
             app.terminate()
         }
-        XCTAssertTrue(exercisedVerticalBar, "Test must run in a Duo pose with a vertical bar")
+        if arguments.contains("--horizontal-bars") {
+            XCTAssertFalse(exercisedVerticalBar, "Horizontal fallback must cover the toolbar and tab bar")
+        } else {
+            XCTAssertTrue(exercisedVerticalBar, "Test must run in a Duo pose with a vertical bar")
+        }
     }
 }
