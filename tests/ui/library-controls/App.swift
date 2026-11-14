@@ -74,7 +74,6 @@ struct ControlsRoot: View {
             }
             .tabItem { Label("Settings", systemImage: "gearshape.fill") }.tag(1)
         }
-        .toolbarVerticalBehavior(ProcessInfo.processInfo.arguments.contains("--horizontal-bars") ? .disabled : .automatic)
     }
 }
 
