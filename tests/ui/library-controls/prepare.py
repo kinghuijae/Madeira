@@ -24,8 +24,9 @@ controls = declaration('struct LibraryLargeTitle:', '/// Whether JIT is availabl
 controls += declaration('private struct LibraryTabNavigation:', 'struct SteamMatch:')
 # The baseline retains the production behavior. This one diagnostic switch
 # isolates the title's hit-testing flag; it does not change the shipped app.
-controls = controls.replace('.allowsHitTesting(false)', '.allowsHitTesting(ProcessInfo.processInfo.arguments.contains("--interactive-title"))')
-(here / 'ProductionControls.swift').write_text('import SwiftUI\nimport UIKit\n' + controls, encoding='utf-8')
+gamepad = (root / 'app/Madeira/GamepadInput.swift').read_text(encoding='utf-8')
+controls += gamepad[gamepad.index('struct ClaimGamepadEvents:'):gamepad.index('enum GamepadEventClaim')]
+(here / 'ProductionControls.swift').write_text('import SwiftUI\nimport UIKit\nimport GameController\n' + controls, encoding='utf-8')
 info = plistlib.loads((root / 'app/Madeira/Info.plist').read_bytes())
 with (here / 'SceneInfo.plist').open('wb') as output:
     plistlib.dump({'UIApplicationSceneManifest': info['UIApplicationSceneManifest']}, output)

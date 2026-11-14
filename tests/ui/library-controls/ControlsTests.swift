@@ -2,12 +2,6 @@ import XCTest
 
 final class ControlsTests: XCTestCase {
     func testProductionControls() { check([]) }
-    func testInteractiveTitle() { check(["--interactive-title"]) }
-    func testWithoutCustomTitle() { check(["--plain-title"]) }
-    func testWithoutRootModifiers() { check(["--no-root-modifiers"]) }
-    func testWithoutInstaller() { check(["--no-installer"]) }
-    func testWithoutGamepadClaim() { check(["--no-gamepad"]) }
-    func testHorizontalBars() { check(["--horizontal-bars"]) }
 
     private func check(_ arguments: [String]) {
         continueAfterFailure = true

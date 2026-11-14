@@ -2,6 +2,8 @@ import SwiftUI
 import UIKit
 import GameController
 
+enum GamepadInput { static let enabled = true }
+
 // Only the JIT backend is stubbed. The title/search modifiers are extracted
 // verbatim from the app by prepare.py, with one explicit diagnostic switch.
 final class LibraryJITState: ObservableObject {
@@ -27,17 +29,7 @@ struct ControlsRoot: View {
     private var plainTitle: Bool { ProcessInfo.processInfo.arguments.contains("--plain-title") }
 
     var body: some View {
-        Group {
-            if ProcessInfo.processInfo.arguments.contains("--no-root-modifiers") {
-                tabs
-            } else if ProcessInfo.processInfo.arguments.contains("--no-installer") {
-                tabs.handlesGameControllerEvents(matching: .gamepad)
-            } else if ProcessInfo.processInfo.arguments.contains("--no-gamepad") {
-                tabs.background(Installer())
-            } else {
-                tabs.background(Installer()).handlesGameControllerEvents(matching: .gamepad)
-            }
-        }
+        tabs.background(Installer())
     }
 
     private var tabs: some View {
@@ -47,6 +39,7 @@ struct ControlsRoot: View {
                     Text(sorted ? "Sorted games" : "Games").accessibilityIdentifier("games")
                     Button("Body action") { sorted.toggle() }
                 }
+                .modifier(ClaimGamepadEvents())
                 .modifier(LibraryTabNavigation(search: $search, prompt: "Search your library"))
                 .toolbar {
                     if !plainTitle { LibraryLargeTitle() }
@@ -69,6 +62,7 @@ struct ControlsRoot: View {
                     Text("Settings page").accessibilityIdentifier("settings-page")
                     NavigationLink("Appearance") { Text("Appearance page") }
                 }
+                .modifier(ClaimGamepadEvents())
                 .modifier(LibraryTabNavigation(search: $settingsSearch, prompt: "Search settings"))
                 .toolbar { if !plainTitle { LibraryLargeTitle() } }
             }
