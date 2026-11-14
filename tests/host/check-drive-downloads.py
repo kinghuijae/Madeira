@@ -41,6 +41,13 @@ with tempfile.TemporaryDirectory(prefix='madeira-drive-') as directory:
     models = (APP / 'DriveModels.swift').read_text()
     api = (APP / 'DriveAPI.swift').read_text().replace('import Foundation', 'import Foundation\n#if canImport(FoundationNetworking)\nimport FoundationNetworking\n#endif')
     storage = (APP / 'DriveStorage.swift').read_text()
+    # Keep every storage and queue fixture inside this temporary directory.
+    start = storage.index('    static var root: URL {')
+    end = storage.index('    static var inbox:', start)
+    storage = storage[:start] + '''    static var root: URL {
+        URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent("support")
+    }
+''' + storage[end:]
     archive = (APP / 'SwiftItch/ItchArchive.swift').read_text().split('// MARK: .7z')[0]
     external = (APP / 'ExternalStorage.swift').read_text()
     paths = external[external.index('enum ExternalStoragePath {'):external.index('enum ExternalStorageIdentity {')]
@@ -90,7 +97,25 @@ enum Insecure {
     manager = manager.replace('request.allowsExpensiveNetworkAccess = !wifiOnly', '')
     for line in ['task.countOfBytesClientExpectsToReceive = block.length', 'task.countOfBytesClientExpectsToSend = 1024']:
         manager = manager.replace(line, '')
+    # Linux's async MainActor is not Foundation's main thread. Deliver fixture
+    # notifications inline on that actor rather than blocking on OperationQueue.main.
+    if sys.platform == 'linux':
+        manager = manager.replace('queue: .main', 'queue: nil')
     (work / 'Manager.swift').write_text(manager)
+    background = (APP / 'SteamDownloadBackground.swift').read_text()
+    for module in ['UIKit', 'BackgroundTasks', 'UserNotifications']:
+        background = background.replace('import ' + module, '')
+    background = 'import Foundation\n' + background
+    if sys.platform == 'linux':
+        background = background.replace('queue: .main', 'queue: nil')
+    background = background.replace('Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] ?? []', '["test.madeira.download.*"]')
+    (work / 'Background.swift').write_text(background)
+    (work / 'API.swift').write_text(api.replace('static let shared = DriveAPI()', 'static let shared = DriveAPI(session: HostNetwork.session)'))
     subprocess.run([SWIFTC, '-swift-version', '5', '-typecheck', *extra,
                     *[str(p) for p in work.glob('*.swift')], str(ROOT / 'tests/host/drive-downloads/Platform.swift')], check=True)
     print('PASS: download coordinator type-check with host platform signatures (not an iOS build)')
+    runtime = work / 'runtime-checks'
+    subprocess.run([SWIFTC, '-swift-version', '5', '-parse-as-library', *extra,
+                    *[str(p) for p in work.glob('*.swift')], str(ROOT / 'tests/host/drive-downloads/Platform.swift'),
+                    str(ROOT / 'tests/host/drive-downloads/lifecycle.swift'), '-o', str(runtime)], check=True)
+    subprocess.run([str(runtime), str(work / 'fixtures')], check=True, timeout=45)

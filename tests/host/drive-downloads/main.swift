@@ -105,6 +105,32 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         let (folder2, programs2) = try DriveStorage.install(folderJob, drive: drive)
         check(programs2 == ["nested/game.exe"] && FileManager.default.fileExists(atPath: drive.appendingPathComponent(folder2 + "/empty").path), "folder install preserves hierarchy and empty directories")
 
+        // Reproduce iOS's /var versus /private/var spelling difference using real
+        // filesystem aliases, including exactly the old "llation/" corruption.
+        let realRoot = fixture.appendingPathComponent("private/var/installation", isDirectory: true)
+        try FileManager.default.createDirectory(at: realRoot, withIntermediateDirectories: true)
+        let realProgram = realRoot.appendingPathComponent("amakanoPE_kor.exe")
+        try Data("MZtest".utf8).write(to: realProgram)
+        let alias = fixture.appendingPathComponent("var", isDirectory: true)
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: realRoot.deletingLastPathComponent())
+        let aliasRoot = alias.appendingPathComponent("installation", isDirectory: true)
+        check(String(realProgram.path.dropFirst(aliasRoot.path.count + 1)) == "llation/amakanoPE_kor.exe", "fixture reproduces the reported path corruption")
+        check(try DriveStorage.programPath(realProgram, in: aliasRoot) == "amakanoPE_kor.exe", "relative path resolves an aliased root")
+        check(try DriveStorage.programPath(aliasRoot.appendingPathComponent("amakanoPE_kor.exe"), in: realRoot) == "amakanoPE_kor.exe", "relative path resolves an aliased file")
+        check(try DriveStorage.programs(in: aliasRoot) == ["amakanoPE_kor.exe"], "program discovery through a symlink root")
+        let nested = realRoot.appendingPathComponent("日本語/게임", isDirectory: true)
+        try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
+        let nestedProgram = nested.appendingPathComponent("start.CMD")
+        try Data("echo test".utf8).write(to: nestedProgram)
+        check(try DriveStorage.programPath(nestedProgram, in: aliasRoot) == "日本語/게임/start.CMD", "nested Unicode program path preserved")
+        rejects("program must be inside the root, not a sibling with the same prefix") {
+            _ = try DriveStorage.programPath(realRoot.appendingPathExtension("other").appendingPathComponent("game.exe"), in: realRoot)
+        }
+        let link = realRoot.appendingPathComponent("linked.exe")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: realProgram)
+        rejects("program discovery still rejects symlink entries") { _ = try DriveStorage.programs(in: aliasRoot) }
+        try FileManager.default.removeItem(at: link)
+
         let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [MockProtocol.self]
         let api = DriveAPI(session: URLSession(configuration: config))
         MockProtocol.answer = { request in

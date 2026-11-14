@@ -146,7 +146,7 @@ struct DriveLibraryView: View {
                     ForEach(downloads.jobs) { job in jobRow(job) }
                 }
                 Section {
-                    Text("Transfers can continue while the screen is locked. Force-quitting Madeira cancels active transfers; reopen the app and resume. Completed 128 MB blocks are kept. Installation finishes while Madeira is open.")
+                    Text("Transfers can continue while the screen is locked. On iOS 26 and later, follow download progress in the Dynamic Island or on the Lock Screen. Stopping there pauses downloads and keeps saved blocks. Force-quitting Madeira cancels active transfers; reopen the app and resume. Completed 128 MB blocks are kept. Installation finishes while Madeira is open.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }

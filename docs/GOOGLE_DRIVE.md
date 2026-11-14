@@ -62,7 +62,26 @@ the program later. Installation does not run setup executables automatically.
 Games without a detected program remain on disk for manual registration.
 Downloaded games do not require a Google sign-in to play.
 
+Program discovery normalizes the installation root and each file URL before
+computing relative paths, including iOS's `/var` and `/private/var` aliases.
+On launch, installed games waiting for a program are scanned again. This repairs
+older saved paths such as `llation/game.exe` without another download; a single
+program is registered automatically, and multiple programs can be selected again.
+
 ## Background downloads and resuming
+
+On iOS 26 and later, Drive uses the same [system Live Activity](https://developer.apple.com/documentation/backgroundtasks/bgcontinuedprocessingtask) as Steam downloads,
+with a separate `download.drive` continued-processing task. The Dynamic Island
+and Lock Screen show the current game's name and byte progress as the queue
+advances. Stopping the activity pauses the Drive queue and preserves completed
+blocks; resume explicitly in Downloads. It does not stop Steam or Epic downloads.
+The existing `MADEIRA_BACKGROUND_DOWNLOADS` setting controls this activity.
+
+If iOS does not grant a continued-processing task, or on earlier iOS versions,
+the background URLSession still owns the transfers. Running out of the app's
+short background grace period does not cancel those transfers. ZIP extraction
+and installation still finish while Madeira is open. Notifications respect
+`MADEIRA_DOWNLOAD_NOTIFICATIONS`, like the other download queues.
 
 Transfers use a single stable background session and at most eight outstanding
 128 MiB range requests. Each successfully validated range is moved into durable
@@ -114,9 +133,11 @@ Run `python3 tests/host/check-drive-downloads.py` on a host with Swift. On Linux
 install the zlib and OpenSSL development headers; the host-only MD5 adapter uses
 OpenSSL. The suite compiles real models/API/storage code and exercises range
 validation, large offsets, persistence, account isolation, recursive pagination,
-checksums, ZIP extraction and folder installation with mocked HTTP responses.
-It also parses all changed Swift sources and type-checks the coordinator with
-host platform signatures. This is not an iOS SDK build.
+checksums, ZIP extraction, folder installation and aliased program paths with
+mocked HTTP responses. It also compiles the coordinator and the shared background
+helper against host platform signatures, exercising old installation recovery,
+activity progress, pending task cancellation, queue pause/resume and the existing
+Steam grace period. This is not an iOS SDK build or an OS scheduling/UI test.
 
 Before release, build with Xcode and test a real OAuth client on a signed iPhone:
 login cancellation/denial, ZIP over 4 GB, many-file folders, screen locking,

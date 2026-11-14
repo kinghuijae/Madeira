@@ -46,13 +46,17 @@ import UserNotifications
     private let source: String
     /// The last part of the task identifier ("<bundle id>.download.<suffix>").
     private let suffix: String
+    /// A background URLSession keeps transferring without app execution time.
+    /// Only the system activity's cancel/expiration should pause that queue.
+    private let usesBackgroundSession: Bool
     private var activeDownload: (() -> Bool)?
     private var pauseDownloads: (() -> Void)?
     private var resumeDownloads: (() -> Void)?
 
-    init(source: String = "Steam", suffix: String = "queue") {
+    init(source: String = "Steam", suffix: String = "queue", usesBackgroundSession: Bool = false) {
         self.source = source
         self.suffix = suffix
+        self.usesBackgroundSession = usesBackgroundSession
     }
 
     private var graceTask: BackgroundRun.Token?   // BackgroundRun.swift
@@ -63,6 +67,8 @@ import UserNotifications
     private var askedNotifications = false
     private var logged = 0
     private var currentName = ""
+    private var doneBytes: UInt64 = 0
+    private var totalBytes: UInt64 = 1
 
     private func log(_ line: String) {
         guard logged < 48 else { return }
@@ -86,7 +92,7 @@ import UserNotifications
                resume: { [weak library] in library?.resumeAfterBackground(); library?.reconcileSession() })
     }
 
-    /// Called once, by a download queue that is not SteamOwnedLibrary (Epic's).
+    /// Called once by another download queue (Epic or Google Drive).
     func attach(active: @escaping () -> Bool, pause: @escaping () -> Void, resume: @escaping () -> Void) {
         activeDownload = active
         pauseDownloads = pause
@@ -109,7 +115,7 @@ import UserNotifications
         currentName = name
         lastSource = ""
         requestNotificationPermission()
-        if #available(iOS 26.0, *), Self.continuedEnabled { submitContinued() }
+        if #available(iOS 26.0, *), Self.continuedEnabled, !isBackground { submitContinued() }
         if #available(iOS 26.0, *), let task = continued as? BGContinuedProcessingTask {
             task.updateTitle("Downloading \(name)", subtitle: "\(source) download in Madeira")
         }
@@ -128,6 +134,7 @@ import UserNotifications
     }
 
     func progress(doneBytes: UInt64, totalBytes: UInt64) {
+        self.doneBytes = doneBytes; self.totalBytes = totalBytes
         if #available(iOS 26.0, *), let task = continued as? BGContinuedProcessingTask {
             let total = Int64(clamping: max(totalBytes, 1))
             if task.progress.totalUnitCount != total { task.progress.totalUnitCount = total }
@@ -149,8 +156,14 @@ import UserNotifications
             }
         }
         guard queueEmpty else { return }
-        finishContinued(success: { if case .completed = outcome { return true }; return false }())
+        finish(success: { if case .completed = outcome { return true }; return false }())
+    }
+
+    /// End a queue whose completion notification is owned by its downloader.
+    func finish(success: Bool) {
+        finishContinued(success: success)
         endGrace()
+        doneBytes = 0; totalBytes = 1
     }
 
     // MARK: iOS 26 continued processing
@@ -181,8 +194,10 @@ import UserNotifications
     @available(iOS 26.0, *)
     private func attach(_ task: BGContinuedProcessingTask) {
         continuedPending = false
+        guard activeDownload?() == true else { task.setTaskCompleted(success: true); return }
         continued = task
-        task.progress.totalUnitCount = 1
+        task.updateTitle("Downloading \(currentName)", subtitle: "\(source) download in Madeira")
+        progress(doneBytes: doneBytes, totalBytes: totalBytes)
         task.expirationHandler = { [weak self] in
             DispatchQueue.main.async {
                 self?.log("continued-processing expired; pausing downloads")
@@ -192,10 +207,13 @@ import UserNotifications
             }
         }
         log("continued-processing running")
-        if activeDownload?() != true { finishContinued(success: true) }
     }
 
     private func finishContinued(success: Bool) {
+        if #available(iOS 26.0, *), continuedPending, let identifier = taskIdentifier {
+            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
+        }
+        continuedPending = false
         if #available(iOS 26.0, *), let task = continued as? BGContinuedProcessingTask {
             task.setTaskCompleted(success: success)
             log("continued-processing completed success=\(success ? 1 : 0)")
@@ -206,7 +224,7 @@ import UserNotifications
     // MARK: Short grace period (all iOS versions)
 
     private func beginGrace() {
-        guard graceTask == nil, continued == nil, activeDownload?() == true else { return }
+        guard !usesBackgroundSession, graceTask == nil, continued == nil, activeDownload?() == true else { return }
         graceTask = BackgroundRun.shared.beginTask("\(source) download") { [weak self] in
             MainActor.assumeIsolated {
                 guard let self else { return }

@@ -79,10 +79,15 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
     private var completion: (() -> Void)?
     private var eventsFinished = false
     private var installGrace: UIBackgroundTaskIdentifier = .invalid
+    private let downloadBackground = SteamDownloadBackground(source: "Google Drive", suffix: "drive", usesBackgroundSession: true)
+    private var backgroundJobID: UUID?
+    private var refreshingPrograms = Set<UUID>()
     private var saveURL: URL { DriveStorage.root.appendingPathComponent("queue.json") }
 
     func start() {
         guard !started else { return }; started = true
+        downloadBackground.attach(active: { [weak self] in self?.activeBackgroundJob != nil },
+                                  pause: { [weak self] in self?.pauseFromActivity() }, resume: {})
         wifiOnly = UserDefaults.standard.object(forKey: "madeiraDriveWiFiOnly") as? Bool ?? true
         do {
             try DriveStorage.directory(DriveStorage.root)
@@ -128,17 +133,22 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
         _ = NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { self.background() }
         }
+        if !readOnly {
+            for job in jobs where job.state == .chooseProgram { refreshPrograms(job.id) }
+            syncBackgroundDownload()
+        }
     }
     private func persist() -> Bool {
         guard !readOnly else { return false }
         do {
             try JSONEncoder().encode(Saved(selection: selection, jobs: jobs))
                 .write(to: saveURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-            revision += 1; return true
+            revision += 1; syncBackgroundDownload(); return true
         } catch {
             self.error = "Could not save download progress: " + error.localizedDescription
             readOnly = true
             for (task, _) in running.values { task.cancel() }
+            syncBackgroundDownload()
             return false
         }
     }
@@ -179,7 +189,6 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
             jobs.append(job)
             plans[job.id] = DriveStorage.blocks(job)
             guard persist() else { return }
-            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
             kick()
         } catch { self.error = error.localizedDescription }
     }
@@ -210,7 +219,9 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
     func progress(id: Int, bytes: Int64) {
         if let (_, block) = running[id] {
             receivedBytes[id] = min(block.length, max(0, bytes))
-            if Date().timeIntervalSince(lastProgress) >= 0.25 { revision += 1; lastProgress = Date() }
+            if Date().timeIntervalSince(lastProgress) >= 0.25 {
+                revision += 1; lastProgress = Date(); syncBackgroundDownload()
+            }
         }
     }
     private func restoreBlocks(_ job: DriveJob) {
@@ -238,6 +249,7 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
         }
     }
     private func pump() async {
+        defer { syncBackgroundDownload() }
         for accountID in Array(renewAccounts) {
             renewAccounts.remove(accountID)
             guard account?.id == accountID else { continue }
@@ -299,7 +311,7 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
     }
     func completed(id: Int, key: String?, receipt: DriveTransferDelegate.Receipt?, error: Error?) {
         running.removeValue(forKey: id); receivedBytes.removeValue(forKey: id)
-        defer { if let receipt { try? FileManager.default.removeItem(at: receipt.url) }; kick() }
+        defer { if let receipt { try? FileManager.default.removeItem(at: receipt.url) }; syncBackgroundDownload(); kick() }
         guard !readOnly, let block = DriveBlock(key), let job = jobs.first(where: { $0.id == block.job }),
               block.belongs(to: job) else { return }
         do {
@@ -396,14 +408,74 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
         guard !readOnly, let index = jobs.firstIndex(where: { $0.id == id }), jobs[index].programs.contains(program),
               let folder = jobs[index].installedFolder else { return }
         let relative = folder + "/" + program
-        guard FileManager.default.fileExists(atPath: LibraryModel.drive.appendingPathComponent(relative).path) else { error = "The selected program is missing."; return }
+        guard let url = try? ExternalStoragePath.native(relative, root: LibraryModel.drive),
+              FileManager.default.fileExists(atPath: url.path) else {
+            refreshPrograms(id)
+            error = "The selected program is missing. Refreshing the installed program list."; return
+        }
         LibraryModel.shared.upsertDrive(id: id, title: jobs[index].title, path: relative)
         guard LibraryModel.shared.entries.contains(where: { $0.driveJobID == id }) else { error = "The game could not be saved in the library."; return }
         jobs[index].selectedProgram = program; jobs[index].state = .ready; jobs[index].message = nil; _ = persist()
     }
+    /// Repair saved program lists from older builds without downloading the game again.
+    private func refreshPrograms(_ id: UUID) {
+        guard !readOnly, let job = jobs.first(where: { $0.id == id }),
+              let folder = job.installedFolder, refreshingPrograms.insert(id).inserted else { return }
+        let drive = LibraryModel.drive
+        Task {
+            defer { refreshingPrograms.remove(id) }
+            do {
+                let programs = try await Task.detached(priority: .utility) {
+                    try DriveStorage.programs(in: ExternalStoragePath.native(folder, root: drive))
+                }.value
+                guard !readOnly, let index = jobs.firstIndex(where: { $0.id == id }),
+                      jobs[index].installedFolder == folder,
+                      [.chooseProgram, .ready].contains(jobs[index].state) else { return }
+                jobs[index].programs = programs
+                jobs[index].message = programs.isEmpty ? "No EXE, BAT or CMD was found. Add a program from the library with +." : nil
+                if !programs.contains(jobs[index].selectedProgram ?? "") {
+                    jobs[index].selectedProgram = nil; jobs[index].state = .chooseProgram
+                }
+                if persist(), jobs[index].state == .chooseProgram, programs.count == 1 {
+                    register(id, program: programs[0])
+                }
+            } catch {
+                if let index = jobs.firstIndex(where: { $0.id == id }) {
+                    jobs[index].message = error.localizedDescription; _ = persist()
+                }
+            }
+        }
+    }
+    private var activeBackgroundJob: DriveJob? {
+        guard !readOnly else { return nil }
+        let active = jobs.filter { $0.accountID == account?.id }
+        return active.first { $0.state == .downloading } ?? active.first { $0.state == .retryWaiting }
+    }
+    /// Like Steam, the activity follows the current game as the queue advances.
+    /// URLSession remains responsible for transfers when no activity is available.
+    private func syncBackgroundDownload(restart: Bool = false) {
+        guard let job = activeBackgroundJob else {
+            if let id = backgroundJobID {
+                let complete = jobs.contains { $0.id == id && [.downloaded, .installing, .chooseProgram, .ready].contains($0.state) }
+                downloadBackground.finish(success: !readOnly && complete)
+                backgroundJobID = nil
+            }
+            return
+        }
+        if backgroundJobID != job.id || restart {
+            backgroundJobID = job.id
+            downloadBackground.downloadStarted(appID: 0, name: job.title)
+        }
+        downloadBackground.progress(doneBytes: UInt64(clamping: downloaded(job)), totalBytes: UInt64(clamping: job.totalBytes))
+    }
+    private func pauseFromActivity() {
+        // The system cancel button stops the whole Drive queue, retaining its blocks.
+        let ids = jobs.filter { $0.state == .downloading || $0.state == .retryWaiting }.map(\.id)
+        for id in ids { pause(id) }
+    }
     private func foreground() {
         if account == nil { account = try? DriveKeychain.load()?.account }
-        checkedFiles.removeAll(); kick()
+        checkedFiles.removeAll(); syncBackgroundDownload(restart: true); kick()
     }
     private func background() {
         guard installer != nil, installGrace == .invalid else { return }
@@ -413,7 +485,7 @@ final class DriveTransferDelegate: NSObject, URLSessionDownloadDelegate, @unchec
         }
     }
     private func notify(_ title: String, body: String) {
-        guard UIApplication.shared.applicationState != .active else { return }
+        guard SteamDownloadBackground.notificationsEnabled, UIApplication.shared.applicationState != .active else { return }
         let content = UNMutableNotificationContent(); content.title = title; content.body = body
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
     }

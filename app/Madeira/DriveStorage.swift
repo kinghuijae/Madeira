@@ -91,16 +91,30 @@ enum DriveStorage {
             try? writer.close(); try? fm.removeItem(at: temporary); throw error
         }
     }
+    /// File enumeration can return /private/var while the supplied root uses /var.
+    /// Compare normalized components, not the lengths of two different spellings.
+    static func programPath(_ url: URL, in folder: URL) throws -> String {
+        let base = folder.resolvingSymlinksInPath().standardizedFileURL.pathComponents
+        let path = url.resolvingSymlinksInPath().standardizedFileURL.pathComponents
+        guard path.count > base.count, path.starts(with: base) else {
+            throw DriveError.message("A program is outside its installed game folder.")
+        }
+        return try DrivePaths.relative(path.dropFirst(base.count).joined(separator: "/"))
+    }
     static func programs(in folder: URL) throws -> [String] {
         let fm = FileManager.default
-        guard let walk = fm.enumerator(at: folder, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey]) else { return [] }
+        let folder = folder.resolvingSymlinksInPath().standardizedFileURL
+        guard try folder.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true,
+              let walk = fm.enumerator(at: folder, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey]) else {
+            throw DriveError.message("Could not read the installed game folder.")
+        }
         var programs: [String] = []
         for case let url as URL in walk {
             try Task.checkCancellation()
             let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
             if values.isSymbolicLink == true { throw DriveError.message("A game contains an unsupported symbolic link.") }
             if values.isRegularFile == true, ["exe", "bat", "cmd"].contains(url.pathExtension.lowercased()) {
-                programs.append(String(url.path.dropFirst(folder.path.count + 1)))
+                programs.append(try programPath(url, in: folder))
             }
         }
         return programs.sorted { $0.localizedStandardCompare($1) == .orderedAscending }

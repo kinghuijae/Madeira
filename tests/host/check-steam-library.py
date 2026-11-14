@@ -164,7 +164,7 @@ require('hasSuffix(".download.*")' in background and '+ suffix' in background an
 require('SteamSignIn.flag("MADEIRA_BACKGROUND_DOWNLOADS", default: true)' in background and
         'SteamSignIn.flag("MADEIRA_DOWNLOAD_NOTIFICATIONS", default: true)' in background,
         'background downloads and notifications each have a switch, on by default')
-require('if #available(iOS 26.0, *), Self.continuedEnabled { submitContinued() }' in background and 'BackgroundRun.shared.beginTask(' in background
+require('if #available(iOS 26.0, *), Self.continuedEnabled, !isBackground { submitContinued() }' in background and 'BackgroundRun.shared.beginTask(' in background
         and 'pauseForBackground()' in background, 'iOS 26 continues in the background; otherwise the grace period ends in a clean pause')
 owned_text = sources['SteamOwnedLibrary.swift']
 require('SteamDownloadBackground.shared.downloadStarted(appID: appID' in owned_text and 'SteamDownloadBackground.shared.progress(progress)' in owned_text
