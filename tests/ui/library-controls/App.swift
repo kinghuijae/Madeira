@@ -30,6 +30,10 @@ struct ControlsRoot: View {
         Group {
             if ProcessInfo.processInfo.arguments.contains("--no-root-modifiers") {
                 tabs
+            } else if ProcessInfo.processInfo.arguments.contains("--no-installer") {
+                tabs.handlesGameControllerEvents(matching: .gamepad)
+            } else if ProcessInfo.processInfo.arguments.contains("--no-gamepad") {
+                tabs.background(Installer())
             } else {
                 tabs.background(Installer()).handlesGameControllerEvents(matching: .gamepad)
             }

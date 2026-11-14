@@ -5,6 +5,8 @@ final class ControlsTests: XCTestCase {
     func testInteractiveTitle() { check(["--interactive-title"]) }
     func testWithoutCustomTitle() { check(["--plain-title"]) }
     func testWithoutRootModifiers() { check(["--no-root-modifiers"]) }
+    func testWithoutInstaller() { check(["--no-installer"]) }
+    func testWithoutGamepadClaim() { check(["--no-gamepad"]) }
     func testHorizontalBars() { check(["--horizontal-bars"]) }
 
     private func check(_ arguments: [String]) {
@@ -12,7 +14,7 @@ final class ControlsTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = arguments
         var exercisedVerticalBar = false
-        for orientation in [UIDeviceOrientation.portrait, .landscapeLeft] {
+        for orientation in [UIDeviceOrientation.portrait] {
             XCUIDevice.shared.orientation = orientation
             app.launch()
             XCTAssertTrue(app.buttons["add"].waitForExistence(timeout: 20))

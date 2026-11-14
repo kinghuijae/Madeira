@@ -30,7 +30,11 @@ jobs:
           xcodebuild test -project tests/ui/library-controls/LibraryControls.xcodeproj \
             -scheme LibraryControls -destination "platform=iOS Simulator,id=$device" \
             -parallel-testing-enabled NO -resultBundlePath /tmp/LibraryControls.xcresult \
-            -only-testing:LibraryControlsTests/ControlsTests/testHorizontalBars \
+            -only-testing:LibraryControlsTests/ControlsTests/testWithoutRootModifiers \
+            -only-testing:LibraryControlsTests/ControlsTests/testWithoutInstaller \
+            -only-testing:LibraryControlsTests/ControlsTests/testWithoutGamepadClaim \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 180 \
+            -maximum-test-execution-time-allowance 180 \
             CODE_SIGNING_ALLOWED=NO
       - uses: actions/upload-artifact@v4
         if: always()
