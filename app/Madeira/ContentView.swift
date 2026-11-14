@@ -3664,11 +3664,8 @@ struct ContentView: View {
                 // The held window goes only to the game's own 32-bit programs: Valve's 32-bit client service,
                 // demand-started seconds into the session once a CEG game installed it, took it and the game
                 // found no slot (2026-11-02). A program from elsewhere still gets any other free slot.
-                if MadeiraConfig.flag("MADEIRA_WOW_HOLD_FOR_GAME") {   // 0: any 32-bit program may take the held window, as before 2026-11-02
-                    setenv("MADEIRA_WOW_HOLD_FOR", game.windowsInstallPath + "\\", 1)
-                } else {
-                    unsetenv("MADEIRA_WOW_HOLD_FOR")
-                }
+                // ntdll checks HOLD_FOR_GAME after WineProcessBridge exports the global and game cfg.
+                setenv("MADEIRA_WOW_HOLD_FOR", game.windowsInstallPath + "\\", 1)
             } else {
                 unsetenv("MADEIRA_WOW_HOLD_WINDOWS")
                 unsetenv("MADEIRA_WOW_HOLD_FOR")

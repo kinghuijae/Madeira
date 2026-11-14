@@ -451,7 +451,7 @@ static pthread_mutex_t ios_child_lock = PTHREAD_MUTEX_INITIALIZER;
  * whether anything still runs; the slot itself is released as before. env.MADEIRA_CHILD_EXIT_TRACK=0 counts an
  * ended child as running until its boot thread returns, as before. */
 #define IOS_CHILD_PATH 260
-static struct { char name[64]; char path[IOS_CHILD_PATH]; double started; int used; void *peb; int exited; double exited_at; int noted; } ios_child_slots[IOS_CHILD_SLOTS];
+static struct { char name[64]; char path[IOS_CHILD_PATH]; WCHAR *path_w; double started; int used; void *peb; int exited; double exited_at; int noted; } ios_child_slots[IOS_CHILD_SLOTS];
 /* Madeira child-exit: the last processes that ended, with the status each ended with. The slots above are
  * released when a child's boot thread returns (milliseconds after a healthy exit), so the status has to live
  * elsewhere: this ring keeps the last IOS_CHILD_ENDED ends (process_exit_wrapper, through
@@ -561,6 +561,13 @@ static int ios_child_slot_take( const UNICODE_STRING *image )
         ios_child_slots[i].noted = 0;
         memcpy( ios_child_slots[i].name, name, n + 1 );
         ios_child_path_text( ios_child_slots[i].path, image );
+        /* Keep the original UTF-16 path for the window reservation's folder check. */
+        ios_child_slots[i].path_w = malloc( image->Length + sizeof(WCHAR) );
+        if (ios_child_slots[i].path_w)
+        {
+            memcpy( ios_child_slots[i].path_w, image->Buffer, image->Length );
+            ios_child_slots[i].path_w[len] = 0;
+        }
         slot = i;
         break;
     }
@@ -574,6 +581,8 @@ static void ios_child_slot_release( int slot )
     if (slot < 0 || slot >= IOS_CHILD_SLOTS) return;
     pthread_mutex_lock( &ios_child_lock );
     ios_child_slots[slot].used = 0;
+    free( ios_child_slots[slot].path_w );
+    ios_child_slots[slot].path_w = NULL;
     ios_child_slots[slot].peb = NULL;
     ios_child_slots[slot].exited = 0;
     ios_child_slots[slot].exited_at = 0;
@@ -594,11 +603,11 @@ void ios_child_slot_bind_peb( void *peb )
 /* The Windows image path of the child whose boot thread this is, NULL for a child without a slot. The slot is this
  * thread's until its boot thread returns, so no lock. Read by virtual_ios.c: a guest-window placeholder held for the
  * game's folder (MADEIRA_WOW_HOLD_FOR) goes only to a program from that folder. */
-const char *ios_child_image_path( void )
+const WCHAR *ios_child_image_path( void )
 {
     int slot = ios_child_slot_current;
     if (slot < 0 || slot >= IOS_CHILD_SLOTS || !ios_child_slots[slot].used) return NULL;
-    return ios_child_slots[slot].path;
+    return ios_child_slots[slot].path_w;
 }
 
 /* The child process with this PEB ended (process_exit_wrapper). Marks the slot that holds it, whichever thread

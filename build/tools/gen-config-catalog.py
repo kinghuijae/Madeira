@@ -645,6 +645,7 @@ OVERLAY = {
     "env.DXVK_CONFIG": {"category": "Vulkan routes", "title": "DXVK options",
                "note": "dxvk.conf options inline, separated by ';' (e.g. dxgi.maxFrameRate=60;d3d11.cachedDynamicResources=a); "
                        "applied after the config file; with d3d11 = dxvk."},
+    "env.MADEIRA_WOW_HOLD_FOR_GAME": {"kind": "bool", "default": "1"},
     # opengl32 32-bit thunks (patches/wine-opengl-winios.patch, applied to the wine tree at
     # build time, so the scanner never sees it): ml1340 query-buffer offsets.
     "env.MADEIRA_GL_QUERY_BUFFER_OFFSETS": {"category": "Graphics", "title": "32-bit GL query results as buffer offsets",

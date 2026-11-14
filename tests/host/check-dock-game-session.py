@@ -41,15 +41,17 @@ ntdll = (ROOT / 'build/ntdll-unix/virtual_ios.c').read_text(encoding='utf-8', er
 check(re.search(r'getenv\( "MADEIRA_WOW_HOLD_WINDOWS" \);\s*/\* N:', ntdll) is not None
       and 'want = hold_n > IOS_WOW_MAX_WINDOWS ? IOS_WOW_MAX_WINDOWS : (unsigned)hold_n;' in ntdll,
       'ntdll reads MADEIRA_WOW_HOLD_WINDOWS at session start, bounded by the window registry')
-check(re.search(r'if MadeiraConfig\.flag\("MADEIRA_WOW_HOLD_FOR_GAME"\) \{[^\n]*//[^\n]*\n\s*setenv\("MADEIRA_WOW_HOLD_FOR", game\.windowsInstallPath \+ "\\\\", 1\)', content) is not None
-      and content.count('unsetenv("MADEIRA_WOW_HOLD_FOR")') == 2,
-      "the held window is named for the game's folder (MADEIRA_WOW_HOLD_FOR), cleared when off or for any other start")
+check('setenv("MADEIRA_WOW_HOLD_FOR", game.windowsInstallPath + "\\\\", 1)' in content
+      and content.count('unsetenv("MADEIRA_WOW_HOLD_FOR")') == 1
+      and 'MadeiraConfig.flag("MADEIRA_WOW_HOLD_FOR_GAME")' not in content
+      and 'getenv( "MADEIRA_WOW_HOLD_FOR_GAME" )' in ntdll,
+      "the app supplies the folder; ntdll decides HOLD_FOR_GAME after cfg export")
 check(re.search(r'getenv\( "MADEIRA_WOW_HOLD_FOR" \);\s*/\* Windows folder', ntdll) is not None
       and 'ios_wow_placeholders[i].for_game = 1;' in ntdll
-      and 'if (!ios_wow_child_in_hold_folder( &image ))' in ntdll,
+      and 'ios_wow_child_in_hold_folder( &image )' in ntdll,
       "ntdll marks the held placeholders for the game's folder and refuses them to a program from elsewhere")
 process = (ROOT / 'build/ntdll-unix/process_ios.c').read_text(encoding='utf-8', errors='replace')
-check('const char *ios_child_image_path( void )' in process, "process_ios.c publishes the booting child's image path")
+check('const WCHAR *ios_child_image_path( void )' in process, "process_ios.c publishes the booting child's image path")
 tick = ntdll[ntdll.find('\nvoid ios_wow_pressure_tick( unsigned cycle )'):]
 tick = tick[:tick.find('\n}\n')]
 check(re.search(r'getenv\( "MADEIRA_WOW_PRESSURE_RELEASE_MB" \);\s*/\* MB:', tick) is not None
@@ -101,46 +103,9 @@ else:
 check('no game names' not in session.lower() and not re.search(r'\b(GTA|Rockstar|Red Dead)\b', session + content[content.find('dock-game-scm') - 2000: content.find('dock-game-scm') + 2000]),
       'no game or publisher names in the new code')
 
-# --- compiled: ntdll's folder match ---------------------------------------------------------
-cc = shutil.which('cc') or shutil.which('clang') or shutil.which('gcc')
-start = ntdll.find('static char ios_wow_hold_for[260];')
-end = ntdll.find('\n}\n', ntdll.find('static int ios_wow_child_in_hold_folder(')) + 3
-if cc and start >= 0 and end > start:
-    harness = '''#include <stdio.h>
-#include <string.h>
-static const char *fake_image;
-const char *ios_child_image_path( void ) { return fake_image; }
-''' + ntdll[start:end] + r'''
-static int in( const char *folder, const char *image )
-{
-    const char *seen;
-    strcpy( ios_wow_hold_for, folder );
-    fake_image = image;
-    return ios_wow_child_in_hold_folder( &seen );
-}
-int main( void )
-{
-    const char *game = "c:\\program files (x86)\\steam\\steamapps\\common\\some game\\";
-    printf( "%d%d%d%d%d%d%d\n",
-            in( game, "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Some Game\\Bin\\game.exe" ),
-            in( game, "\\??\\C:\\Program Files (x86)\\Steam\\steamapps\\common\\Some Game\\game.exe" ),
-            in( game, "C:/Program Files (x86)/Steam/steamapps/common/Some Game/game.exe" ),
-            in( game, "C:\\Program Files (x86)\\Common Files\\Steam\\SteamService.exe" ),
-            in( game, "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Some Game 2\\game.exe" ),
-            in( "", "C:\\Program Files (x86)\\Common Files\\Steam\\SteamService.exe" ),
-            in( game, NULL ) );
-    return 0;
-}
-'''
-    with tempfile.TemporaryDirectory() as tmp:
-        src, exe = Path(tmp) / 'hold.c', Path(tmp) / 'hold'
-        src.write_text(harness, encoding='utf-8')
-        built = subprocess.run([cc, '-w', '-o', str(exe), str(src)], capture_output=True, text=True)
-        out = subprocess.run([str(exe)], capture_output=True, text=True).stdout.strip() if built.returncode == 0 else built.stderr[:400]
-    check(out == '1110011', "the folder match: the game's programs in any case, slash or \\??\\ form pass; "
-                            f"the client service and a sibling folder do not; no folder or an unknown child pass ({out})")
-else:
-    print('SKIP: no C compiler; the folder match is not run')
+# Exercise the production wide-path policy and GL attach, including the spill registry.
+check(subprocess.run([sys.executable, str(ROOT / 'tests/host/check-wow-startup.py')]).returncode == 0,
+      'compiled WoW startup regression checks')
 
 # --- compiled -------------------------------------------------------------------------------
 swiftc = shutil.which('swiftc')

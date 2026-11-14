@@ -17,6 +17,7 @@ Also checks the call sites: virtual_init only calls ios_wow_session_start, and m
 all window code when the session has no window, no placeholder and is not armed.
 """
 from pathlib import Path
+from wow_unicode_fixture import unicode_support
 import os, re, subprocess, tempfile
 
 root = Path(__file__).resolve().parents[2]
@@ -44,7 +45,7 @@ bias = bias[:bias.index("\n}\n")]
 assert bias.index("if (!ios_wow_session_armed()) return end;") < bias.index("ios_wow_candidate_slot()")
 print("PASS: virtual_init and map_view only reach the window code through the lazy gates")
 
-harness = r"""
+harness = unicode_support() + r"""
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -128,7 +129,7 @@ static int fake_munmap( void *addr, size_t size ) {
 }
 #define munmap fake_munmap
 /* process_ios.c: the booting child's image path (the held placeholders' folder rule) */
-const char *ios_child_image_path( void ) { return NULL; }
+const WCHAR *ios_child_image_path( void ) { return NULL; }
 static int reserved_areas;
 static void mmap_add_reserved_area( void *addr, size_t size ) { (void)addr; (void)size; reserved_areas++; }
 static void ios_va_describe_range( void *addr, ULONG_PTR len, char *buf, size_t n ) { (void)addr; (void)len; snprintf( buf, n, "-" ); }
