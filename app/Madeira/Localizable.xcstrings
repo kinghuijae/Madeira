@@ -30210,6 +30210,846 @@
           }
         }
       }
+    },
+    "Send Logs to GitHub": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logs an GitHub senden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar registros a GitHub"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub로 로그 보내기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar logs ao GitHub"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправить журналы в GitHub"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将日志发送到 GitHub"
+          }
+        }
+      }
+    },
+    "Sending logs…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logs werden gesendet …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviando registros…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로그 보내는 중…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviando logs…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправка журналов…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在发送日志…"
+          }
+        }
+      }
+    },
+    "What went wrong? (optional)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was ist schiefgelaufen? (optional)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Qué falló? (opcional)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무엇이 잘못됐나요? (선택)"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O que deu errado? (opcional)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Что пошло не так? (необязательно)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出了什么问题?(可选)"
+          }
+        }
+      }
+    },
+    "Send": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "보내기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送"
+          }
+        }
+      }
+    },
+    "The logs, madeira.cfg and the game's config go to your GitHub repository.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Logs, madeira.cfg und die Konfiguration des Spiels gehen in dein GitHub-Repository."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los registros, madeira.cfg y la configuración del juego van a tu repositorio de GitHub."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로그, madeira.cfg, 게임 설정이 내 GitHub 저장소로 올라가요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os logs, o madeira.cfg e a configuração do jogo vão para o seu repositório do GitHub."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Журналы, madeira.cfg и настройки игры отправятся в ваш репозиторий GitHub."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日志、madeira.cfg 和游戏配置将发送到你的 GitHub 仓库。"
+          }
+        }
+      }
+    },
+    "Could not send the logs": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Logs konnten nicht gesendet werden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron enviar los registros"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로그를 보내지 못했어요"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível enviar os logs"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось отправить журналы"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法发送日志"
+          }
+        }
+      }
+    },
+    "Logs sent": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logs gesendet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registros enviados"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로그를 보냈어요"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logs enviados"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Журналы отправлены"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日志已发送"
+          }
+        }
+      }
+    },
+    "Copy Link": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link kopieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar enlace"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "링크 복사"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar link"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать ссылку"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制链接"
+          }
+        }
+      }
+    },
+    "Ask Claude Code to run /game-triage. It reads the newest report.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitte Claude Code, /game-triage auszuführen. Es liest den neuesten Bericht."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pide a Claude Code que ejecute /game-triage. Lee el informe más reciente."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code에서 /game-triage를 실행하세요. 가장 최근 보고서를 읽어요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peça ao Claude Code para executar /game-triage. Ele lê o relatório mais recente."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Попросите Claude Code выполнить /game-triage. Он прочитает последний отчёт."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让 Claude Code 运行 /game-triage,它会读取最新的报告。"
+          }
+        }
+      }
+    },
+    "Repository (owner/name)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repository (Besitzer/Name)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repositorio (propietario/nombre)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장소 (소유자/이름)"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repositório (dono/nome)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Репозиторий (владелец/имя)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仓库(所有者/名称)"
+          }
+        }
+      }
+    },
+    "Remove Token": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token entfernen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar token"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "토큰 삭제"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remover token"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить токен"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除令牌"
+          }
+        }
+      }
+    },
+    "Token": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "토큰"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Токен"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "令牌"
+          }
+        }
+      }
+    },
+    "Save Token": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token speichern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar token"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "토큰 저장"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvar token"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить токен"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存令牌"
+          }
+        }
+      }
+    },
+    "GitHub Logs": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub-Logs"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registros en GitHub"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 로그"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logs no GitHub"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Журналы в GitHub"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 日志"
+          }
+        }
+      }
+    },
+    "Send Logs to GitHub commits the logs, madeira.cfg and a game's config to a private repository of yours, where Claude Code reads them. Use a fine-grained token for that repository only, with Contents set to Read and write. The token stays in this device's Keychain.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„Logs an GitHub senden“ legt die Logs, madeira.cfg und die Konfiguration eines Spiels als Commit in einem privaten Repository von dir ab, wo Claude Code sie liest. Verwende ein Fine-grained-Token nur für dieses Repository, mit Contents auf Read and write. Das Token bleibt im Schlüsselbund dieses Geräts."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar registros a GitHub sube con un commit los registros, madeira.cfg y la configuración de un juego a un repositorio privado tuyo, donde Claude Code los lee. Usa un token fine-grained solo para ese repositorio, con Contents en Read and write. El token se queda en el llavero de este dispositivo."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub로 로그 보내기는 로그, madeira.cfg, 게임 설정을 내 비공개 저장소에 커밋하고, Claude Code가 거기서 읽어요. 그 저장소 하나에만 Contents를 Read and write로 준 fine-grained 토큰을 쓰세요. 토큰은 이 기기의 키체인에만 저장돼요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar logs ao GitHub faz um commit dos logs, do madeira.cfg e da configuração de um jogo num repositório privado seu, onde o Claude Code os lê. Use um token fine-grained só para esse repositório, com Contents em Read and write. O token fica nas Chaves deste dispositivo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Отправить журналы в GitHub» коммитит журналы, madeira.cfg и настройки игры в ваш закрытый репозиторий, откуда их читает Claude Code. Используйте fine-grained токен только для этого репозитория с правом Contents: Read and write. Токен хранится в связке ключей этого устройства."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“将日志发送到 GitHub”会把日志、madeira.cfg 和游戏配置提交到你的私有仓库,Claude Code 会从那里读取。请使用仅限该仓库的 fine-grained 令牌,并将 Contents 设为 Read and write。令牌只保存在本设备的钥匙串中。"
+          }
+        }
+      }
+    },
+    "Enter the repository as owner/name in Settings › Advanced › GitHub Logs.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib das Repository als Besitzer/Name unter Einstellungen › Erweitert › GitHub-Logs ein."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe el repositorio como propietario/nombre en Ajustes › Avanzado › Registros en GitHub."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정 › 고급 › GitHub 로그에서 저장소를 소유자/이름 형식으로 입력하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digite o repositório como dono/nome em Ajustes › Avançado › Logs no GitHub."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Укажите репозиторий как владелец/имя в Настройки › Дополнительно › Журналы в GitHub."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在 设置 › 高级 › GitHub 日志 中以 所有者/名称 的形式填写仓库。"
+          }
+        }
+      }
+    },
+    "Save a GitHub token in Settings › Advanced › GitHub Logs first.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speichere zuerst ein GitHub-Token unter Einstellungen › Erweitert › GitHub-Logs."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primero guarda un token de GitHub en Ajustes › Avanzado › Registros en GitHub."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "먼저 설정 › 고급 › GitHub 로그에서 GitHub 토큰을 저장하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primeiro salve um token do GitHub em Ajustes › Avançado › Logs no GitHub."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сначала сохраните токен GitHub в Настройки › Дополнительно › Журналы в GitHub."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先在 设置 › 高级 › GitHub 日志 中保存 GitHub 令牌。"
+          }
+        }
+      }
+    },
+    "The repository was not found, or the token cannot see it.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Repository wurde nicht gefunden, oder das Token hat keinen Zugriff darauf."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró el repositorio, o el token no tiene acceso a él."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장소를 찾을 수 없거나 토큰이 그 저장소에 접근할 수 없어요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O repositório não foi encontrado, ou o token não tem acesso a ele."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Репозиторий не найден, или у токена нет к нему доступа."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到该仓库,或者令牌无权访问它。"
+          }
+        }
+      }
+    },
+    "GitHub refused the token. Make a new one and save it again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub hat das Token abgelehnt. Erstelle ein neues und speichere es erneut."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub rechazó el token. Crea uno nuevo y vuelve a guardarlo."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub가 토큰을 거부했어요. 새 토큰을 만들어 다시 저장하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O GitHub recusou o token. Crie um novo e salve-o de novo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub отклонил токен. Создайте новый и сохраните его снова."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 拒绝了该令牌。请新建一个并重新保存。"
+          }
+        }
+      }
+    },
+    "The token cannot write to this repository. Give it Contents: Read and write.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Token darf nicht in dieses Repository schreiben. Gib ihm Contents: Read and write."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El token no puede escribir en este repositorio. Dale Contents: Read and write."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "토큰에 이 저장소의 쓰기 권한이 없어요. Contents: Read and write를 주세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O token não pode gravar neste repositório. Dê a ele Contents: Read and write."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Токен не может писать в этот репозиторий. Дайте ему Contents: Read and write."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该令牌无法写入此仓库。请授予 Contents: Read and write 权限。"
+          }
+        }
+      }
+    },
+    "GitHub answered with an error:": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub hat mit einem Fehler geantwortet:"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub respondió con un error:"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub가 오류로 응답했어요:"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O GitHub respondeu com um erro:"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub ответил ошибкой:"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 返回了错误:"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -21,7 +21,7 @@ try {
         'check-ci-component-keys', 'check-ci-release', 'check-sidestore-source',
         'check-release-publisher', 'check-game-deps', 'check-wine-media-dlls',
         'check-font-keys-repair', 'check-nls-extra-switch', 'check-config-catalog',
-        'check-translations', 'check-doc-links'
+        'check-translations', 'check-doc-links', 'check-github-logs'
     )) {
         & $python "tests/host/$check.py" *> ".local/checks/$check.log"
         if ($LASTEXITCODE -ne 0) { $failed += $check; Write-Host "FAIL $check (see .local/checks/$check.log)" }

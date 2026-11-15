@@ -45,6 +45,8 @@ jobs:
         run: python3 tests/host/check-control-presets.py
       - name: Check Google Drive downloads
         run: python3 tests/host/check-drive-downloads.py
+      - name: Check Send Logs to GitHub
+        run: python3 tests/host/check-github-logs.py
       - name: Check Steam connection recovery
         if: hashFiles('tests/host/check-steam-cm-transport.py') != ''
         run: python3 tests/host/check-steam-cm-transport.py

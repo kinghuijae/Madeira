@@ -3446,6 +3446,7 @@ struct LibraryView: View {
                     Text("Get Help from Claude shares a guide to known fixes, the last logs and madeira.cfg. For one game's config too, use the button on its Game details page.")
                 }
             }
+            if settingsShow("GitHub", "logs", "token", "repository", "Claude") { GitHubLogsSettingsSection() }
             if settingsShow("pointer", "mouse", "cursor", "touch", "trackpad", "sensitivity") {
                 Section("Pointer") { LibraryPointerSettings() }
             }
@@ -4480,6 +4481,8 @@ struct LibraryDetail: View {
                     }
                     // ClaudeHelp.swift: the fixes guide, the logs and this game's config to a chat.
                     ClaudeHelpButton(entry: entry)
+                    // GitHubLogs.swift: the same files to the logs repository, once one is set up.
+                    GitHubLogsButton(entry: entry)
                     Button("Reset to Recommended", systemImage: "arrow.counterclockwise") { confirmReset = true }
                         .confirmationDialog(GameRecommendations.question(recommended, desktop: entry.desktop == true),
                                             isPresented: $confirmReset, titleVisibility: .visible) {
@@ -5794,6 +5797,7 @@ struct LibraryHUD: View {
             }
             if dockStart.failure != nil || model.forceCloseOffered {
                 ClaudeHelpButton(entry: entry).frame(minHeight: 44)
+                GitHubLogsButton(entry: entry).frame(minHeight: 44)
             }
         }
         .font(.subheadline.weight(.semibold)).buttonStyle(.bordered).tint(.white)

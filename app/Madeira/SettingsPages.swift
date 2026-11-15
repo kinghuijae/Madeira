@@ -192,6 +192,8 @@ struct SettingsPageView: View {
             } header: { Text("Diagnostics") } footer: {
                 Text("Get Help from Claude shares a guide to known fixes, the last logs and madeira.cfg. For one game's config too, use the button on its Game details page.")
             }
+            // GitHubLogs.swift: the same files, committed to the owner's logs repository.
+            GitHubLogsSettingsSection()
             Section {
                 Button("All settings") { sheet = .allSettings }
             } footer: {
