@@ -148,6 +148,20 @@ let healthyWindowText = LogSummary.text(healthyWindow, source: "test")
 assert(healthyWindowText.contains("Problems found: none") && !healthyWindowText.contains("could not reserve"))
 assert(!text.contains("could not be allocated") && !text.contains("could not reserve"))
 
+// Non-ASCII names (a Steam game of 2026-11-15): Wine writes each UTF-16 unit as \XXXX,
+// Madeira Dock's [session-log] line carries the UTF-8 name (process_ios.c).
+let cjk = "\u{661F}\u{7A7A}\u{5217}\u{8F66}\u{4E0E}\u{767D}\u{7684}\u{65C5}\u{884C}"
+let unicodeLog = #"""
+[srv-own] new_thread tid=008c pid=0088 requester=0024 request_unixfd=-1 rev=ml586
+008c:err:process:NtCreateUserProcess NtCreateUserProcess: image=L"C:\\Program Files (x86)\\Steam\\steamapps\\common\\\661f\7a7a\5217\8f66\4e0e\767d\7684\65c5\884c\\\661f\7a7a\5217\8f66\4e0e\767d\7684\65c5\884c.exe" cmdline=L"x"
+008c:err:process:NtCreateUserProcess NtCreateUserProcess: image=L"C:\\face\\\d83d\de00 cafe\\UnityCrashHandler32.exe" cmdline=L"x"
+"""# + "\n[session-log] Steam game \(cjk).exe: logs/\(cjk).exe-2026-11-15_22-16-37.txt\n"
+let unicode = LogSummary.facts(lines: unicodeLog.split(separator: "\n", omittingEmptySubsequences: false))
+assert(unicode.steamGame == cjk + ".exe" && unicode.game == cjk + ".exe")
+assert(unicode.processes.map(\.image) == [cjk + ".exe", "UnityCrashHandler32.exe"])
+assert(LogSummary.quoted(#"x=L"C:\\face\\\d83d\de00 cafe\\\"q\"\tz" y"#, after: "x=L\"") == "C:\\face\\\u{1F600} cafe\\\"q\"\tz")
+assert(LogSummary.text(unicode, source: "test").contains("Program: \(cjk).exe"))
+
 // A launch with no session leaves the last summary alone; a file is read across 1 MB chunks.
 let dir = URL(fileURLWithPath: CommandLine.arguments[1])
 let empty = dir.appendingPathComponent("empty.txt"), logFile = dir.appendingPathComponent("madeira-log.txt")

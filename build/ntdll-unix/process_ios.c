@@ -1361,6 +1361,51 @@ static WCHAR *ios_env_with( const WCHAR *env, const char *const *names, int coun
     return out;
 }
 
+/* An exe name as UTF-8 for a log file name and the [session-log] line: a
+ * Chinese or Japanese name stays readable (it was all '_' before), and the
+ * app's summary matches it with the game. A character a file name cannot hold
+ * (control characters, / \ : * ? " < > |) and a lone surrogate become '_'.
+ * Stops before a character that would not fit whole; returns the length.
+ * Checked by tests/host/check-session-log-name.py. */
+static unsigned madeira_session_log_name( const WCHAR *ip, int len, char *name, unsigned size )
+{
+    unsigned n = 0, need;
+    unsigned char utf8[4];
+    int k;
+
+    if (!size) return 0;
+    for (k = 0; k < len; k++)
+    {
+        unsigned c = ip[k];
+
+        if (c >= 0xd800 && c <= 0xdbff && k + 1 < len && ip[k + 1] >= 0xdc00 && ip[k + 1] <= 0xdfff)
+        {
+            c = 0x10000 + ((c - 0xd800) << 10) + (ip[k + 1] - 0xdc00);
+            k++;
+        }
+        else if (c >= 0xd800 && c <= 0xdfff) c = '_';
+        if (c < 0x20 || c == 0x7f || (c < 0x80 && strchr( "/\\:*?\"<>|", (int)c ))) c = '_';
+        if (c < 0x80) { utf8[0] = c; need = 1; }
+        else if (c < 0x800) { utf8[0] = 0xc0 | (c >> 6); utf8[1] = 0x80 | (c & 0x3f); need = 2; }
+        else if (c < 0x10000)
+        {
+            utf8[0] = 0xe0 | (c >> 12); utf8[1] = 0x80 | ((c >> 6) & 0x3f); utf8[2] = 0x80 | (c & 0x3f);
+            need = 3;
+        }
+        else
+        {
+            utf8[0] = 0xf0 | (c >> 18); utf8[1] = 0x80 | ((c >> 12) & 0x3f);
+            utf8[2] = 0x80 | ((c >> 6) & 0x3f); utf8[3] = 0x80 | (c & 0x3f);
+            need = 4;
+        }
+        if (n + need > size - 1) break;
+        memcpy( name + n, utf8, need );
+        n += need;
+    }
+    name[n] = 0;
+    return n;
+}
+
 /* A Steam game's session log under its own name.
  *
  * The app keeps each run's log as Documents/logs/<exe>-<yyyy-MM-dd_HH-mm-ss>.txt
@@ -1397,12 +1442,7 @@ static void madeira_steam_session_log( const UNICODE_STRING *image )
     }
     if (!found) return;
     for (k = 0; k < len; k++) if (ip[k] == '\\' || ip[k] == '/') base = k + 1;
-    for (k = base; k < len && n < sizeof(name) - 1; k++)
-    {
-        WCHAR c = ip[k];
-        name[n++] = (c < 0x20 || c > 0x7e || strchr( "/\\:*?\"<>|", (char)c )) ? '_' : (char)c;
-    }
-    name[n] = 0;
+    n = madeira_session_log_name( ip + base, len - base, name, sizeof(name) );
     if (!n) return;
     /* Helpers a game spawns (a shader compiler such as fxc.exe, installers,
      * crash reporters such as Nixxes' crs-handler.exe) are not the game. */

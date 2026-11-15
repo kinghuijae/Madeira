@@ -24,6 +24,7 @@ import re
 import shutil
 import subprocess
 import sys
+import unicodedata
 import zlib
 from pathlib import Path
 
@@ -61,15 +62,19 @@ def sync(repo):
     if not (CLONE / ".git").exists():
         CLONE.parent.mkdir(parents=True, exist_ok=True)
         print(f"cloning {url} (sparse, without old logs) ...", file=sys.stderr)
-        git("clone", "--filter=blob:none", "--sparse", url, str(CLONE))
+        # Reports keep the device's bytes: no CRLF conversion on Windows.
+        git("clone", "-c", "core.autocrlf=false", "--filter=blob:none", "--sparse", url, str(CLONE))
     else:
+        git("config", "core.autocrlf", "false", cwd=CLONE)
         git("pull", "--ff-only", "--quiet", cwd=CLONE)
     git("sparse-checkout", "add", "history", cwd=CLONE, check=False)
 
 
 def reports():
-    listing = git("ls-tree", "-d", "--name-only", "HEAD", "reports/", cwd=CLONE, check=False)
-    return sorted(Path(line).name for line in listing.splitlines() if line.strip())
+    # -z: unquoted paths. Without it git octal-escapes non-ASCII names ("\353\263...")
+    # and Path() on Windows splits them on the backslashes.
+    listing = git("ls-tree", "-z", "-d", "--name-only", "HEAD", "reports/", cwd=CLONE, check=False)
+    return sorted(entry.rsplit("/", 1)[-1] for entry in listing.split("\0") if entry.strip())
 
 
 def unpack(name):
@@ -86,9 +91,11 @@ def unpack(name):
                 data = gzip.decompress(data)
             except (OSError, EOFError, zlib.error):
                 data = zlib.decompress(data[10:-8], -15)  # raw DEFLATE inside, if the trailer is off
-            (target / f.stem).write_bytes(data)
+            name = f.stem
         else:
-            (target / f.name).write_bytes(data)
+            name = f.name
+        # iOS writes decomposed (NFD) Hangul; NFC keeps the names openable by name on Windows.
+        (target / unicodedata.normalize("NFC", name)).write_bytes(data)
     return target
 
 

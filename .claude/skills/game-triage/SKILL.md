@@ -51,10 +51,16 @@ If it fails:
   play the game until it fails, then send again.
 - `madeira-last-game-log.txt` is the last run with a game; `madeira-log.txt`
   is the run that was going when they sent, which may be a later launch.
-- `REPORT.md`'s Build is the build on the device. Compare it with
-  `git log --oneline -15`: if a fix you would suggest already landed after it,
-  the answer is to update the app (SideStore source `main-latest`), not to fix
-  it again.
+- `REPORT.md`'s Build is the build installed when the report was sent; the
+  `[build]` line near the top of each log is the build that run used, and they
+  differ when the app was updated after the game ran. Judge the logs by their
+  own `[build]` line. Compare it with `git log --oneline -15`: if a fix you
+  would suggest already landed after it, the answer is to update the app
+  (SideStore source `main-latest`) or play again on the newer build, not to
+  fix it again.
+- Wine writes non-ASCII names as `\XXXX` UTF-16 escapes (`\661f\7a7a...` is
+  `星空...`), and older builds' summaries show such a program as underscores
+  (`_________.exe`). Match the game by its folder or Steam App ID then.
 
 ## 3. Read in this order
 

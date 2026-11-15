@@ -446,13 +446,42 @@ enum LogSummary {
         return String(id)
     }
 
-    /// The text between `marker` and the next unescaped quote, with Wine's `\\` undone.
+    /// The text between `marker` and the next unescaped quote, with Wine's debugstr
+    /// escapes undone: `\\`, `\"`, `\n`, `\r`, `\t`, and `\XXXX`, one UTF-16 unit,
+    /// which is how Wine writes every non-ASCII character (a surrogate pair as two),
+    /// so `\661f\7a7a` reads as 星空 again.
     static func quoted(_ line: String, after marker: String) -> String? {
         guard let r = line.range(of: marker) else { return nil }
-        var out = "", escaped = false
-        for c in line[r.upperBound...] {
-            if escaped { out.append(c); escaped = false } else if c == "\\" { escaped = true } else if c == "\"" { return out } else { out.append(c) }
+        let chars = Array(line[r.upperBound...])
+        var out = "", units: [UInt16] = [], i = 0
+        func flush() {
+            if !units.isEmpty { out += String(decoding: units, as: UTF16.self); units.removeAll() }
         }
+        while i < chars.count {
+            let c = chars[i]
+            if c == "\"" { flush(); return out }
+            if c == "\\", i + 1 < chars.count {
+                let hex = chars[(i + 1)..<min(i + 5, chars.count)]
+                if hex.count == 4, hex.allSatisfy(\.isHexDigit), let unit = UInt16(String(hex), radix: 16) {
+                    units.append(unit)
+                    i += 5
+                    continue
+                }
+                flush()
+                switch chars[i + 1] {
+                case "n": out.append("\n")
+                case "r": out.append("\r")
+                case "t": out.append("\t")
+                default: out.append(chars[i + 1])
+                }
+                i += 2
+                continue
+            }
+            flush()
+            out.append(c)
+            i += 1
+        }
+        flush()
         return out
     }
 
