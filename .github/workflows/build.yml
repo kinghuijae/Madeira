@@ -49,6 +49,8 @@ jobs:
         run: python3 tests/host/check-github-logs.py
       - name: Check Steam session log names
         run: python3 tests/host/check-session-log-name.py
+      - name: Check the TCP connect timeout
+        run: python3 tests/host/check-connect-timeout.py
       - name: Check Steam connection recovery
         if: hashFiles('tests/host/check-steam-cm-transport.py') != ''
         run: python3 tests/host/check-steam-cm-transport.py

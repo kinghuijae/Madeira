@@ -1093,6 +1093,16 @@ OVERLAY = {
                         "gives the next draw a fresh buffer, so draws already recorded keep what they read. "
                         "[d3d9-index-range] lines in the log say how much was copied. 0: the whole-buffer copy, as before. "
                         "Read once per session."},
+    # The wineserver's TCP connects read it (wine, build/wine-patches/0001-server-tcp-connect-timeout.patch).
+    "env.MADEIRA_CONNECT_TIMEOUT_MS": {"category": "Steam & Dock",
+                "title": "Fail a TCP connect still pending after (ms)",
+                "kind": "int", "default": "", "sources": ["build/wine-patches/0001-server-tcp-connect-timeout.patch",
+                                                          "app/Madeira/ContentView.swift"],
+                "note": "A connect to an address that never answers fails with WSAETIMEDOUT after this many ms "
+                        "(1000-120000), as Windows gives up after about 21 s, instead of waiting for iOS's 75 s or the "
+                        "program's own timeout. Valve's client waited 60 s for an address of test.steampowered.com "
+                        "that did not answer before it logged on. Madeira Dock sessions set 10000; other sessions "
+                        "leave it unset. 0: no bound. [srv-conn-timeout] lines in the log. Read once per session."},
     # DXMT's Direct3D 9 format gate reads it (dxmt/src/d3d9/d3d9_format.cpp, isColorRTFormat).
     "env.MADEIRA_D3D9_LUMINANCE_RT": {"category": "Direct3D 9/10/11 (DXMT)",
                 "title": "Direct3D 9: luminance formats as render targets",

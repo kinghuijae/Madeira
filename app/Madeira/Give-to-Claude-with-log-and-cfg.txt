@@ -205,6 +205,7 @@ JIT pool: RX=... size=   pool actually reserved
 [dll-missing] other status   DLL not found (summary hides harmless ones)
 [dock-launch] [dock-report] k=v [dock-start-program] [steam-env]
                          Madeira Dock and Steam's answer
+[srv-conn-timeout]       a TCP connect nobody answered was failed early
 [WineProc] the main process exited while ... (steam.exe)
                          the game needs Steam: use Madeira Dock
 [exit-report] status=    Windows exit status of the first program
@@ -234,6 +235,10 @@ Steam / Dock results:
 - Stuck on a black Steam window when a game starts another game
   (campaign <-> zombies): needs a build with the Dock steam://run
   hand-off.
+- Steam logon takes about a minute: Valve's client waits for an address
+  that never answers (a [srv-conn] line with no [srv-conn-done]).
+  Madeira Dock sessions give up after 10 s ([srv-conn-timeout]);
+  env.MADEIRA_CONNECT_TIMEOUT_MS sets it, 0 turns it off.
 - "Steam Cloud full" blocking Play, HTTP 401 on downloads, DLC missing,
   Steam re-installing redistributables before every launch: fixed in
   newer builds; ask them to update Madeira.

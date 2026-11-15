@@ -3680,6 +3680,12 @@ struct ContentView: View {
             } else {
                 unsetenv("MADEIRA_SWAP_X64_TITLE")
             }
+            // A TCP connect still pending after 10 s fails with WSAETIMEDOUT, as on Windows
+            // (build/wine-patches/0001-server-tcp-connect-timeout.patch): Valve's client waited 60 s
+            // for an address of test.steampowered.com that never answered before it logged on
+            // (device log 2026-11-15). env.MADEIRA_CONNECT_TIMEOUT_MS in madeira.cfg or the game's
+            // file, exported after this, wins; 0 leaves connects unbounded.
+            setenv("MADEIRA_CONNECT_TIMEOUT_MS", "10000", 1)
             // Only a start that runs installers, or one that starts the service manager, turns
             // madsync off, for its own session (build/madsync/madsync.c reads
             // MADEIRA_MADSYNC_SESSION once, when the server starts).
