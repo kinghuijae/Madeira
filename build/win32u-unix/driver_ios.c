@@ -775,6 +775,108 @@ static void winios_note_dialog_thread( HWND hwnd, const RECT *visible )
                  (int)visible->left, (int)visible->top, (int)visible->right, (int)visible->bottom );
 }
 
+/* Game mode, a dialog left off the screen. amakanoPE_kor.exe (a KiriKiri
+ * visual novel, report 2026-11-16_09-10-02, build v0.13.1) opens a two-button
+ * screen-mode dialog before its game window and centres it itself on an empty
+ * rectangle: the 255x86 box went to {-127,-43,128,43}, its default button
+ * wholly off the 1920x1080 desktop, the rest a 31x10 pt speck in a corner of
+ * the phone. It was also shown without activation, so nothing was foreground
+ * and the Return key of the keyboard button went nowhere (as for the D3D12
+ * menu under MADEIRA_INPUT_FOREGROUND). The game sat in the modal loop until
+ * it was quit. A window manager keeps such a box reachable, so: a visible,
+ * captioned top-level window smaller than the virtual screen that is shown
+ * or moved partly outside it is moved to the centre of the screen by its own
+ * thread at its next message poll (the modal loop polls every 16 ms,
+ * winios_note_dialog_thread) and made foreground unless it already is, which
+ * gives its default button the keyboard. At most twice per window, so a
+ * program that puts it back is not fought. Windows already on the screen,
+ * child windows and full-screen game windows are never touched.
+ * MADEIRA_DIALOG_ONSCREEN=0 turns this off. Logs [dlg-onscreen] (16 lines). */
+static __thread HWND ios_offscreen_dialog;
+static __thread HWND ios_offscreen_last;
+static __thread unsigned int ios_offscreen_moves;
+
+static int ios_dialog_onscreen_enabled(void)
+{
+    static int on = -1;
+
+    if (on < 0)
+    {
+        const char *env = getenv( "MADEIRA_DIALOG_ONSCREEN" );  /* Default on: a game-mode dialog shown partly off the screen is moved to its centre and made foreground; 0 = off. */
+        on = !(env && env[0] == '0' && !env[1]);
+    }
+    return on;
+}
+
+/* 1, with the new top-left corner in *x / *y, when the window {left,top,right,bottom}
+ * is partly outside the screen and smaller than it both ways: centred on the
+ * screen. 0 for a window on the screen, a tiny one, or one as large as the screen. */
+static int ios_dialog_onscreen_target( int left, int top, int right, int bottom, int screen_left, int screen_top,
+                                       int screen_right, int screen_bottom, int *x, int *y )
+{
+    int w = right - left, h = bottom - top;
+    int sw = screen_right - screen_left, sh = screen_bottom - screen_top;
+
+    if (w < 32 || h < 32 || w >= sw || h >= sh) return 0;
+    if (left >= screen_left && top >= screen_top && right <= screen_right && bottom <= screen_bottom) return 0;
+    *x = screen_left + (sw - w) / 2;
+    *y = screen_top + (sh - h) / 2;
+    return 1;
+}
+
+/* From winios_drv_window_pos_changed (game mode, a visible top-level window
+ * with a surface), on any thread: only the window's own thread acts on it. */
+static void ios_note_offscreen_dialog( HWND hwnd, const RECT *window )
+{
+    DWORD style;
+    RECT screen;
+    int x, y;
+
+    if (!ios_dialog_onscreen_enabled()) return;
+    style = get_window_long( hwnd, GWL_STYLE );
+    if ((style & (WS_CHILD | WS_MINIMIZE)) || !(style & WS_VISIBLE) || (style & WS_CAPTION) != WS_CAPTION) return;
+    if (get_window_thread( hwnd, NULL ) != GetCurrentThreadId()) return;
+    if (hwnd == ios_offscreen_last && ios_offscreen_moves >= 2) return;
+    screen = get_virtual_screen_rect( 0, MDT_DEFAULT );
+    if (!ios_dialog_onscreen_target( window->left, window->top, window->right, window->bottom,
+                                     screen.left, screen.top, screen.right, screen.bottom, &x, &y )) return;
+    ios_offscreen_dialog = hwnd;
+}
+
+/* From winios_drv_process_events, outside any SetWindowPos of the window. */
+static void ios_apply_offscreen_dialog(void)
+{
+    static unsigned int said;
+    HWND hwnd = ios_offscreen_dialog, fg;
+    RECT rect, screen;
+    BOOL moved, front = FALSE;
+    int x, y;
+
+    ios_offscreen_dialog = 0;
+    if (!is_window( hwnd ) || !is_window_visible( hwnd )) return;
+    if (!get_window_rect( hwnd, &rect, get_thread_dpi() )) return;
+    screen = get_virtual_screen_rect( 0, MDT_DEFAULT );
+    if (!ios_dialog_onscreen_target( rect.left, rect.top, rect.right, rect.bottom,
+                                     screen.left, screen.top, screen.right, screen.bottom, &x, &y )) return;
+    if (hwnd != ios_offscreen_last)
+    {
+        ios_offscreen_last = hwnd;
+        ios_offscreen_moves = 0;
+    }
+    if (ios_offscreen_moves >= 2) return;
+    ios_offscreen_moves++;
+    moved = NtUserSetWindowPos( hwnd, 0, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+    if ((fg = NtUserGetForegroundWindow()) != hwnd && !(get_window_long( hwnd, GWL_STYLE ) & WS_DISABLED))
+        front = set_foreground_window( hwnd, FALSE, TRUE );
+    if (__atomic_fetch_add( &said, 1, __ATOMIC_RELAXED ) < 16)
+        dprintf( 2, "[dlg-onscreen] hwnd=%p was at {%d,%d,%d,%d}, partly off the screen {%d,%d,%d,%d}: "
+                 "moved to %d,%d ok=%d (move %u of 2); foreground was %p, made it foreground ok=%d "
+                 "(MADEIRA_DIALOG_ONSCREEN=0 disables)\n", hwnd,
+                 (int)rect.left, (int)rect.top, (int)rect.right, (int)rect.bottom,
+                 (int)screen.left, (int)screen.top, (int)screen.right, (int)screen.bottom,
+                 x, y, (int)moved, ios_offscreen_moves, fg, (int)front );
+}
+
 /* Activation of a full-screen window when it is shown. iOS has no window
  * manager, and the wineserver keeps Windows' foreground lock (queue_ios.c,
  * set_foreground_window): a process that has had neither input nor the
@@ -995,6 +1097,7 @@ static void ios_tiny_window_poll(void)
 static BOOL winios_drv_process_events( DWORD mask )
 {
     if (ios_show_foreground) ios_apply_fullscreen_foreground();
+    if (ios_offscreen_dialog) ios_apply_offscreen_dialog();
     ios_foreground_if_none( "a message poll" );
     ios_tiny_window_poll();
     return winios_pProcessEvents ? winios_pProcessEvents( mask ) : FALSE;
@@ -1450,7 +1553,11 @@ static void winios_drv_window_pos_changed( HWND hwnd, HWND insert_after, HWND ow
                              (int)v->left, (int)v->top, (int)v->right, (int)v->bottom );
             }
         }
-        if (visible && surface && winios_game_windows()) winios_note_dialog_thread( hwnd, v );
+        if (visible && surface && winios_game_windows())
+        {
+            winios_note_dialog_thread( hwnd, v );
+            ios_note_offscreen_dialog( hwnd, &new_rects->window );
+        }
     }
     /* ml505: z-order and geometry churn. If the three same-rect siblings are
      * being reordered, the topmost changes and the surface shows whichever
